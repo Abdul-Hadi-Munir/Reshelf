@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About Us – Reshelf</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+<!-- HEADER -->
+<header class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+
+        <a href="index.html" class="flex items-center space-x-2">
+            <svg class="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
+                      d="M3 9l9-6 9 6M4.5 10.5V19a2 2 0 002 2h2a2 2 0 002-2v-3a2 2 0 012-2h0a2 2 0 012 2v3a2 2 0 002 2h2a2 2 0 002-2v-8.5" />
+            </svg>
+            <span class="text-2xl font-bold">Reshelf</span>
+        </a>
+
+        <div class="hidden md:flex space-x-6 items-center">
+            <a href="shop.html" class="hover:text-emerald-600">Shop</a>
+            <a href="bestsellers.html" class="hover:text-emerald-600">Bestsellers</a>
+            <a href="collections.html" class="hover:text-emerald-600">Collections</a>
+            <a href="ourstory.html" class="hover:text-emerald-600">Our Story</a>
+            <a href="about.html" class="text-emerald-600 font-semibold">About Us</a>
+            <a href="bulkorder.html" class="hover:text-emerald-600">Bulk Orders</a>
+            <a href="becomepartner.html" class="hover:text-emerald-600">For Partners</a>
+
+            <a href="cart.html" class="relative hover:text-emerald-600">
+                <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                <span
+                    class="absolute -top-2 -right-3 bg-red-600 text-white text-xs rounded-full h-5 w-5 grid place-items-center">
+                    0
+                </span>
+            </a>
+        </div>
+
+    </nav>
+</header>
+
+<!-- ABOUT HERO -->
+<section class="py-24 bg-emerald-700 text-white text-center">
+    <h1 class="text-5xl font-extrabold">About Us</h1>
+    <p class="text-lg opacity-90 mt-3">Big Savings. Zero Waste. Real Impact.</p>
+</section>
+
+<!-- ABOUT CONTENT -->
+<section class="py-20 container mx-auto px-6">
+
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <div>
+            <h2 class="text-4xl font-bold mb-6">Who We Are</h2>
+            <p class="text-gray-700 leading-relaxed mb-4">
+                Reshelf is Pakistan’s first surplus-based shopping platform designed to bring the
+                best deals directly from suppliers, distributors, and manufacturers to customers
+                — while reducing national food waste.
+            </p>
+            <p class="text-gray-700 leading-relaxed mb-4">
+                Our model helps companies clear shelf-ready stock at huge discounts instead of letting it go to waste.
+                Customers enjoy 30%–70% cheaper prices, and the environment benefits from reduced waste.
+            </p>
+        </div>
+
+        <div class="lg:w-1/2"><img src="https://media.licdn.com/dms/image/v2/D4D12AQFNJAoqHkybKQ/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1715876154148?e=1762387200&v=beta&t=XnQgXB7lBZqbCNYFggcUJqgsl_nOCuVV96UdQ0K8ttU" alt="Market stall with fresh produce" class="rounded-2xl shadow-2xl w-full"></div>
+
+
+    </div>
+
+</section>
+
+<!-- MISSION -->
+<section class="bg-gray-100 py-20">
+    <div class="container mx-auto px-6">
+
+        <h2 class="text-4xl font-bold text-center mb-12">Our Mission</h2>
+
+        <div class="grid md:grid-cols-3 gap-12">
+
+            <div class="bg-white p-8 rounded-xl shadow text-center">
+                <i data-lucide="leaf" class="h-12 w-12 text-emerald-600 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Reduce Waste</h3>
+                <p class="text-gray-600">Fighting Pakistan’s 27% food waste crisis through sustainable supply chain recovery.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow text-center">
+                <i data-lucide="percent" class="h-12 w-12 text-emerald-600 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Help Consumers Save</h3>
+                <p class="text-gray-600">Giving people access to perfectly good surplus goods at unbeatable prices.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow text-center">
+                <i data-lucide="store" class="h-12 w-12 text-emerald-600 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Support Businesses</h3>
+                <p class="text-gray-600">Helping brands clear excess inventory & recover value instead of discarding it.</p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-gray-800 text-white py-12">
+    <div class="container mx-auto px-6">
+
+        <div class="grid md:grid-cols-3 gap-8">
+
+            <div>
+                <h3 class="text-xl font-bold">Reshelf</h3>
+                <p class="text-gray-400 mt-2">Big Savings, Zero Waste.</p>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="ourstory.html">Our Story</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="bulkorder.html">Bulk Orders</a></li>
+                    <li><a href="becomepartner.html">For Partners</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-4">Follow Us</h3>
+                <p class="text-gray-400">Facebook • Instagram • Twitter</p>
+            </div>
+
+        </div>
+
+    </div>
+</footer>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

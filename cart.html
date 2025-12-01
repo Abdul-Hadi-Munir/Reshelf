@@ -1,0 +1,116 @@
+<title>Reshelf - Your Shopping Cart</title>
+<main>
+        <section id="cart" class="py-10 md:py-20 bg-gray-100">
+             <div class="container mx-auto px-6">
+                 <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Your Shopping Cart</h1>
+                 
+                 <div id="cart-content" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                     </div>
+                 <p id="empty-cart-message" class="text-center text-gray-600 text-lg mt-10 hidden">Your cart is empty! <a href="shop.html" class="text-emerald-600 hover:underline font-semibold">Start shopping</a> to find some great deals.</p>
+             </div>
+        </section>
+    </main>
+
+    <script>
+        // Cart-specific Functions
+        function renderCartItem(item) {
+            // Get the original product details for price comparison (optional but good for context)
+            const product = PRODUCTS.find(p => p.id === item.id) || {};
+            const originalPrice = product.originalPrice || 0;
+            const savings = (originalPrice - item.price) * item.quantity;
+            
+            return `
+                <div id="cart-item-${item.id}" class="flex items-center bg-white p-4 rounded-lg shadow-md transition-shadow">
+                    <a href="product.html?id=${item.id}" class="flex-shrink-0">
+                        <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md mr-4">
+                    </a>
+                    <div class="flex-grow min-w-0 pr-4">
+                        <h3 class="font-semibold text-gray-900 truncate">${item.name}</h3>
+                        <p class="text-sm text-gray-500">Unit Price: ${formatPrice(item.price)}</p>
+                        ${savings > 0 ? `<p class="text-xs text-green-600 font-medium">You save ${formatPrice(savings)}</p>` : ''}
+                    </div>
+                    
+                    <div class="flex flex-col items-end justify-center">
+                        <div class="flex items-center border border-gray-300 rounded-md mb-2">
+                            <button class="cart-quantity-btn px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-md" data-id="${item.id}" data-action="decrease">-</button>
+                            <span class="px-2 text-center w-8 text-sm">${item.quantity}</span>
+                            <button class="cart-quantity-btn px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-md" data-id="${item.id}" data-action="increase">+</button>
+                        </div>
+                        
+                        <p class="font-bold text-gray-800">${formatPrice(item.price * item.quantity)}</p>
+                        <button class="cart-remove-btn text-xs text-red-500 hover:text-red-700 mt-1" data-id="${item.id}">Remove</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCartSummary() {
+            if (cart.length === 0) {
+                document.getElementById('cart-content').innerHTML = '';
+                document.getElementById('empty-cart-message').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('empty-cart-message').classList.add('hidden');
+            
+            let subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const deliveryFee = 250; 
+            const total = subtotal + deliveryFee;
+
+            const cartListHtml = cart.map(renderCartItem).join('');
+
+            const summaryHtml = `
+                <div class="lg:col-span-2 space-y-4">
+                    ${cartListHtml}
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-xl h-fit">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Order Summary</h3>
+                    <div class="space-y-3 text-gray-700">
+                        <div class="flex justify-between"><span>Subtotal (${cart.length} unique items)</span><span>${formatPrice(subtotal)}</span></div>
+                        <div class="flex justify-between"><span>Delivery Fee (Karachi)</span><span>${formatPrice(deliveryFee)}</span></div>
+                        <div class="flex justify-between font-bold text-xl pt-3 border-t border-gray-200"><span>Total Due</span><span class="text-emerald-600">${formatPrice(total)}</span></div>
+                    </div>
+                    <a href="checkout.html" class="mt-6 w-full block text-center bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300">Proceed to Checkout</a>
+                    <a href="shop.html" class="mt-3 w-full block text-center text-emerald-600 border border-emerald-600 font-bold py-3 rounded-lg hover:bg-emerald-50 transition duration-300">Continue Shopping</a>
+                </div>
+            `;
+
+            document.getElementById('cart-content').innerHTML = summaryHtml;
+            setupCartListeners();
+            lucide.createIcons(); // Re-initialize icons
+        }
+        
+        function setupCartListeners() {
+            document.querySelectorAll('.cart-quantity-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    const action = e.currentTarget.dataset.action;
+                    
+                    const item = cart.find(i => i.id === id);
+                    if (!item) return;
+
+                    if (action === 'increase') {
+                        item.quantity++;
+                    } else if (action === 'decrease' && item.quantity > 1) {
+                        item.quantity--;
+                    }
+                    saveCart();
+                    renderCartSummary(); // Re-render the cart to update totals
+                });
+            });
+
+            document.querySelectorAll('.cart-remove-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    cart = cart.filter(item => item.id !== id);
+                    saveCart();
+                    renderCartSummary(); // Re-render the cart
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCartSummary);
+    </script>
+</body>
+</html>

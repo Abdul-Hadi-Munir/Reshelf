@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Collections - Reshelf</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        body { font-family: "Inter", sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+<!-- HEADER -->
+<header class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center space-x-2">
+            <svg class="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6" />
+            </svg>
+            <span class="text-2xl font-bold">Reshelf</span>
+        </a>
+
+        <!-- Main Nav -->
+        <div class="hidden md:flex space-x-6 items-center">
+            <a href="shop.html" class="hover:text-emerald-600">Shop</a>
+            <a href="bestsellers.html" class="hover:text-emerald-600">Bestsellers</a>
+            <a href="collections.html" class="text-emerald-600 font-semibold">Collections</a>
+            <a href="ourstory.html" class="hover:text-emerald-600">Our Story</a>
+            <a href="about.html" class="hover:text-emerald-600">About Us</a>
+            <a href="bulkorder.html" class="hover:text-emerald-600">Bulk Orders</a>
+            <a href="becomepartner.html" class="hover:text-emerald-600">For Partners</a>
+
+            <a href="cart.html" class="relative hover:text-emerald-600">
+                <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                <span
+                    class="absolute -top-2 -right-3 bg-red-600 text-white text-xs rounded-full h-5 w-5 grid place-items-center">0</span>
+            </a>
+        </div>
+    </nav>
+</header>
+
+<!-- PAGE TITLE -->
+<section class="py-20 text-center">
+    <h1 class="text-4xl font-bold text-gray-800">Shop by Collection</h1>
+    <p class="text-gray-600 mt-4">Find your favorite categories at discounted rates</p>
+</section>
+
+<!-- COLLECTION GRID -->
+<section class="pb-20">
+    <div class="container mx-auto px-6">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+
+            <a href="collection-pantry-staples.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="shopping-basket" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Pantry Staples</h3>
+</a>
+
+<a href="collection-snacks.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="cookie" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Snacks & Confectionery</h3>
+</a>
+
+<a href="collection-beverages.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="glass-water" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Beverages</h3>
+</a>
+
+<a href="collection-dairy.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="milk" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Dairy & Chilled</h3>
+</a>
+
+<a href="collection-personal-care.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="sparkles" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Personal Care</h3>
+</a>
+
+<a href="collection-household.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="home" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Household Supplies</h3>
+</a>
+
+<a href="collection-baby.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="baby" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Baby Products</h3>
+</a>
+
+<a href="collection-pet.html"
+   class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+    <i data-lucide="bone" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4"></i>
+    <h3 class="font-bold text-lg group-hover:text-emerald-600">Pet Care</h3>
+</a>
+
+
+        </div>
+
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-gray-800 text-white py-12">
+    <div class="container mx-auto px-6">
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            
+            <div>
+                <h3 class="text-xl font-bold">Reshelf</h3>
+                <p class="text-gray-400 mt-2">Big Savings, Zero Waste.</p>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="ourstory.html">Our Story</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="bulkorder.html">Bulk Orders</a></li>
+                    <li><a href="becomepartner.html">For Partners</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-4">Follow Us</h3>
+                <p class="text-gray-400">Facebook • Instagram • Twitter</p>
+            </div>
+
+        </div>
+
+    </div>
+</footer>
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

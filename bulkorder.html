@@ -1,0 +1,59 @@
+<title>Reshelf - Bulk Orders & Partnerships</title>
+<main>
+        <section id="contact" class="py-10 md:py-20 bg-gray-100">
+             <div class="container mx-auto px-6 max-w-4xl">
+                 <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">Bulk Orders & Partnership Inquiries</h1>
+                 <p class="text-center text-xl text-gray-600 mb-12">Looking to buy large quantities or partner with us to offload surplus inventory?</p>
+                 
+                 <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <form action="#" method="POST" class="space-y-6">
+                        <div>
+                            <label for="purpose" class="block text-sm font-medium text-gray-700">Inquiry Type</label>
+                            <select id="purpose" name="purpose" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md">
+                                <option>Bulk Purchase (50+ items)</option>
+                                <option>Become a Partner (Sell Surplus Inventory)</option>
+                                <option>Other Inquiry</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="full-name" class="block text-sm font-medium text-gray-700">Full Name / Company Name</label>
+                            <input type="text" name="full-name" id="full-name" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" name="email" id="email" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                <input type="tel" name="phone" id="phone" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-700">Details / Specific Products of Interest</label>
+                            <textarea id="message" name="message" rows="4" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2"></textarea>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300 shadow-md">Submit Inquiry</button>
+                        </div>
+                    </form>
+                 </div>
+             </div>
+        </section>
+    </main>
+
+    <script>
+        // Form submission is usually handled by a backend service.
+        // For static site, we can add a basic confirmation:
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your inquiry! We will contact you shortly.');
+            e.target.reset();
+        });
+    </script>
+</body>
+</html>

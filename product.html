@@ -1,0 +1,160 @@
+<title>Reshelf - Product Detail</title>
+<main>
+        <section id="product-detail" class="py-12 md:py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div id="product-detail-container">
+                    <p class="text-center text-xl text-red-500 font-bold hidden" id="loading-error">Product not found. Please go back to the <a href="shop.html" class="text-emerald-600 hover:underline">Shop</a>.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Logic for Accordion (Since it's only needed here)
+        function setupAccordions() {
+            document.querySelectorAll('.accordion-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('i');
+                    
+                    button.classList.toggle('active');
+                    icon.classList.toggle('rotate-180');
+                    
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                    } else {
+                        content.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        function loadProductDetail() {
+            // 1. Get Product ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = parseInt(urlParams.get('id'));
+
+            if (!productId) {
+                document.getElementById('loading-error').classList.remove('hidden');
+                return;
+            }
+
+            // 2. Find the product
+            const product = PRODUCTS.find(p => p.id === productId);
+
+            if (!product) {
+                document.getElementById('loading-error').classList.remove('hidden');
+                return;
+            }
+
+            document.title = `Reshelf - ${product.name}`;
+
+            // 3. Render the details structure
+            const container = document.getElementById('product-detail-container');
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                    <div class="relative w-full">
+                       <img id="main-product-image" src="${product.image}" alt="${product.name}" class="w-full aspect-square object-cover rounded-lg shadow-md">
+                       <span id="product-detail-discount" class="absolute top-4 left-4 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded">${product.discount}% OFF</span>
+                    </div>
+
+                    <div>
+                        <h1 id="product-detail-name" class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">${product.name}</h1>
+                        <div class="flex items-center mb-4">
+                            <div class="flex items-baseline mr-4">
+                                <span class="text-gray-600 mr-2">Reshelf Price:</span>
+                                <span id="product-detail-price" class="text-3xl font-bold text-emerald-600">${formatPrice(product.reshelfPrice)}</span>
+                            </div>
+                            <div class="flex items-baseline text-gray-500">
+                                <span class="mr-2">MRP:</span>
+                                <span id="product-detail-original-price" class="line-through">${formatPrice(product.originalPrice)}</span>
+                            </div>
+                        </div>
+                        <p class="text-green-600 font-semibold mb-4">Smart Choice — Order and enjoy great savings.</p>
+                        <p class="text-gray-700 mb-4"><span class="font-semibold">Best Before:</span> ${product.features[1].replace('Expiry', '')}</p>
+                        
+                        <div class="mb-6">
+                            <label for="product-quantity-input" class="font-semibold text-gray-700 mb-2 block">Quantity:</label>
+                            <div class="flex items-center border border-gray-300 rounded-md w-fit">
+                                <button id="quantity-decrease" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-l-md">-</button>
+                                <input type="text" id="product-quantity-input" value="1" class="w-12 text-center border-l border-r">
+                                <button id="quantity-increase" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-r-md">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <button id="add-to-cart-button" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300 flex items-center justify-center space-x-2" data-product-id="${product.id}">
+                                <span>Add to Cart</span>
+                           </button>
+                           <a href="checkout.html" class="text-center w-full bg-emerald-800 text-white font-bold py-3 rounded-lg hover:bg-emerald-900 transition duration-300">Buy It Now</a>
+                        </div>
+                        <a href="bulk-order.html" class="text-center block w-full mt-4 bg-gray-600 text-white font-bold py-3 rounded-lg hover:bg-gray-700 transition duration-300">Place a Bulk Order</a>
+                    </div>
+                </div>
+
+                <div class="mt-12 max-w-4xl mx-auto">
+                    <div class="border-b">
+                         <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                            <span>Product Description</span>
+                            <i data-lucide="chevron-down" class="transition-transform"></i>
+                         </button>
+                         <div class="accordion-content pb-4 text-gray-600">
+                            <p id="product-detail-description">${product.description}</p>
+                         </div>
+                    </div>
+                    <div class="border-b">
+                         <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                            <span>Key Features</span>
+                            <i data-lucide="chevron-down" class="transition-transform"></i>
+                         </button>
+                         <div class="accordion-content pb-4 text-gray-600">
+                            <ul id="product-detail-features" class="list-disc list-inside">
+                                ${product.features.map(f => `<li>${f}</li>`).join('')}
+                            </ul>
+                         </div>
+                    </div>
+                    <div class="border-b">
+                        <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                            <span>Disclaimer</span>
+                             <i data-lucide="chevron-down" class="transition-transform"></i>
+                        </button>
+                        <div class="accordion-content pb-4 text-gray-600">
+                             <p>Product packaging may vary from the image shown. Please read labels, warnings, and directions before using or consuming a product.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 4. Setup interaction logic
+            setupAccordions(); 
+
+            let quantityInput = document.getElementById('product-quantity-input');
+            let quantity = parseInt(quantityInput.value);
+
+            document.getElementById('quantity-increase').addEventListener('click', () => {
+                quantity++;
+                quantityInput.value = quantity;
+            });
+            document.getElementById('quantity-decrease').addEventListener('click', () => {
+                if (quantity > 1) {
+                    quantity--;
+                    quantityInput.value = quantity;
+                }
+            });
+            document.getElementById('product-quantity-input').addEventListener('change', (e) => {
+                quantity = Math.max(1, parseInt(e.target.value) || 1);
+                e.target.value = quantity;
+            });
+
+            document.getElementById('add-to-cart-button').addEventListener('click', () => {
+                addToCart(product.id, quantity);
+            });
+
+            // Re-initialize Lucide icons for the newly injected content
+            lucide.createIcons();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProductDetail);
+    </script>
+</body>
+</html>

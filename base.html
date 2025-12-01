@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reshelf - [Page Title]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2574&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        /* Simple Toast Notification */
+        #toast-notification {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: bottom 0.5s ease-in-out;
+            z-index: 100;
+        }
+        #toast-notification.show {
+            bottom: 20px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header id="header" class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-2">
+                 <svg class="h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                </svg>
+                <span class="text-2xl font-bold text-gray-800">Reshelf</span>
+            </a>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="shop.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">Shop</a>
+                <a href="bestsellers.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">Bestsellers</a>
+                <a href="collections.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">Collections</a>
+                <a href="our-story.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">Our Story</a>
+                <a href="bulk-order.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">Bulk Orders</a>
+                <a href="partners.html" class="text-gray-600 hover:text-emerald-600 transition duration-300">For Partners</a>
+
+                <div class="relative">
+                    <button id="city-selector-button" class="flex items-center text-gray-600 hover:text-emerald-600 transition duration-300 border border-gray-300 px-3 py-1 rounded-lg">
+                        <i data-lucide="map-pin" class="h-4 w-4 mr-2"></i>
+                        <span id="current-city">Faisalabad</span>
+                        <i data-lucide="chevron-down" class="h-4 w-4 ml-1"></i>
+                    </button>
+                    <div id="city-dropdown" class="hidden absolute mt-2 w-48 bg-white rounded-lg shadow-xl z-50 -translate-x-1/2 left-1/2">
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Karachi</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Hyderabad</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Faisalabad</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Lahore</a>
+                    </div>
+                </div>
+                <a href="cart.html" class="relative text-gray-600 hover:text-emerald-600 transition duration-300">
+                    <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                    <span id="cart-item-count" class="absolute -top-2 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+            </div>
+            
+            <div class="flex items-center md:hidden">
+                <a href="cart.html" class="relative text-gray-600 hover:text-emerald-600 transition duration-300 mr-4">
+                    <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                    <span id="mobile-cart-item-count" class="absolute -top-2 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+                <button id="mobile-menu-button" class="text-gray-800 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="shop.html" class="block py-2 text-gray-600 hover:text-emerald-600">Shop</a>
+            <a href="bestsellers.html" class="block py-2 text-gray-600 hover:text-emerald-600">Bestsellers</a>
+            <a href="collections.html" class="block py-2 text-gray-600 hover:text-emerald-600">Collections</a>
+            <a href="our-story.html" class="block py-2 text-gray-600 hover:text-emerald-600">Our Story</a>
+            <a href="bulk-order.html" class="block py-2 text-gray-600 hover:text-emerald-600">Bulk Orders</a>
+            <a href="partners.html" class="block py-2 text-gray-600 hover:text-emerald-600">For Partners</a>
+        </div>
+    </header>
+
+    <main>
+        </main>
+
+    <div id="toast-notification" class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl text-center">
+        <span id="toast-message"></span>
+    </div>
+
+    <footer class="bg-gray-900 text-white py-12 mt-10">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2025 Reshelf. Big Savings, Zero Waste.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Universal Initializers
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Mobile Menu Toggle Logic (Re-implemented for the common header)
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if(mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // City Selector Dropdown Logic (Re-implemented for the common header)
+            const cityButton = document.getElementById('city-selector-button');
+            const cityDropdown = document.getElementById('city-dropdown');
+            if(cityButton) {
+                cityButton.addEventListener('click', () => {
+                    cityDropdown.classList.toggle('hidden');
+                });
+                document.querySelectorAll('.city-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.getElementById('current-city').textContent = e.target.textContent;
+                        cityDropdown.classList.add('hidden');
+                        // In a real app, this would trigger content changes
+                    });
+                });
+            }
+        });
+    </script>
+    </body>
+</html>
