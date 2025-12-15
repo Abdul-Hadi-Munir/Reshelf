@@ -1,1383 +1,1021 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Hand Interface v3.1 - Stable</title>
+    <title>Reshelf - Big Savings, Zero Waste</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --primary: #00f3ff;
-            --secondary: #ff0055;
-            --warning: #ffcc00;
-            --bg: #050505;
-            --panel: rgba(5, 10, 15, 0.9);
-            --font-main: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
-        }
-
         body {
-            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2574&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        .page-section {
+            display: none; /* Hide all pages by default */
+        }
+        .page-section.active {
+            display: block; /* Show active page */
+        }
+        .accordion-content {
+            display: none;
+            transition: max-height 0.3s ease-out;
             overflow: hidden;
-            background-color: var(--bg);
-            font-family: var(--font-main);
-            user-select: none;
-            color: white;
         }
-
-        /* --- UI LAYER --- */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-            display: none; /* Hidden until initialized */
+        .accordion-button.active + .accordion-content {
+           display: block;
         }
-
-        .hud-panel {
-            position: absolute;
-            background: var(--panel);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            padding: 20px;
-            border-radius: 6px;
-            pointer-events: auto;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+        .product-card-link, .collection-card-link {
+            cursor: pointer;
         }
-
-        /* Top Left Stats */
-        #stats-panel {
-            top: 20px;
-            left: 20px;
-            width: 280px;
-            border-left: 3px solid var(--primary);
-            background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, rgba(0,0,0,0) 100%), var(--panel);
-        }
-
-        /* Top Right Controls */
-        #controls-panel {
-            top: 20px;
-            right: 20px;
-            width: 320px;
-            border-right: 3px solid var(--secondary);
-            text-align: right;
-            background: linear-gradient(-90deg, rgba(255, 0, 85, 0.1) 0%, rgba(0,0,0,0) 100%), var(--panel);
-        }
-
-        /* Bottom Mode Selector */
-        #mode-selector {
-            bottom: 40px;
+        /* Simple Toast Notification */
+        #toast-notification {
+            position: fixed;
+            bottom: -100px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 0;
+            transition: bottom 0.5s ease-in-out;
+            z-index: 100;
         }
-
-        .mode-btn {
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 12px 30px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+        #toast-notification.show {
+            bottom: 20px;
         }
-
-        .mode-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.4), transparent);
-            transition: 0.5s;
-        }
-
-        .mode-btn:hover::before { left: 100%; }
-
-        .mode-btn:hover, .mode-btn.active {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 0 25px var(--primary);
-            border-color: var(--primary);
-        }
-
-        .mode-btn.secondary { border-color: var(--secondary); color: var(--secondary); }
-        .mode-btn.secondary:hover, .mode-btn.secondary.active {
-            background: var(--secondary); color: #fff; box-shadow: 0 0 25px var(--secondary);
-        }
-
-        /* Typography */
-        h1 { font-size: 20px; margin: 0 0 15px 0; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
-        h2 { font-size: 16px; margin: 0 0 10px 0; color: #fff; }
-        p { font-size: 13px; color: #aaa; margin: 5px 0; line-height: 1.4; }
-        
-        .data-row { 
-            display: flex; justify-content: space-between; 
-            margin-bottom: 6px; 
-            font-family: 'Courier New', Courier, monospace; 
-            font-size: 12px; 
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 2px;
-        }
-        .data-label { color: #888; }
-        .data-val { color: #fff; font-weight: bold; }
-        .status-ok { color: var(--primary); }
-        .status-warn { color: var(--warning); }
-        .status-err { color: var(--secondary); }
-
-        /* Video Feed */
-        #video-container {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 260px;
-            height: 195px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 5;
-            opacity: 0.6;
-            transition: opacity 0.3s;
-            transform: scaleX(-1);
-            pointer-events: auto;
-            background: #000;
-        }
-        #video-container:hover { opacity: 1; border-color: var(--primary); }
-        video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Start / Error Screen */
-        #overlay-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #020202;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-image: 
-                radial-gradient(circle at 50% 50%, #111 0%, #000 70%),
-                linear-gradient(0deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
-        }
-
-        #overlay-content {
-            text-align: center;
-            max-width: 600px;
-            padding: 40px;
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-        }
-
-        .title-glitch {
-            font-size: 48px;
-            font-weight: 800;
-            color: #fff;
-            text-shadow: 2px 2px var(--secondary), -2px -2px var(--primary);
-            margin-bottom: 10px;
-            letter-spacing: 4px;
-        }
-
-        .btn-large {
-            margin-top: 30px;
-            padding: 15px 50px;
-            font-size: 18px;
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            transition: 0.3s;
-        }
-        .btn-large:hover { background: var(--primary); color: #000; box-shadow: 0 0 40px var(--primary); }
-
-        .btn-secondary {
-            margin-top: 15px;
-            padding: 10px 30px;
-            font-size: 14px;
-            background: transparent;
-            color: #888;
-            border: 1px solid #444;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            display: none; /* Hidden by default */
-        }
-        .btn-secondary:hover { border-color: #fff; color: #fff; }
-
-        .error-box {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid var(--secondary);
-            background: rgba(255, 0, 85, 0.1);
-            color: #ffaaaa;
-            font-family: monospace;
-            display: none;
-            text-align: left;
-        }
-
-        #loading-text {
-            color: var(--primary);
-            font-family: monospace;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-
-        /* 3D Canvas */
-        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800">
 
-    <!-- Start / Error Overlay -->
-    <div id="overlay-screen">
-        <div id="overlay-content">
-            <div class="title-glitch">NEURAL INTERFACE</div>
-            <p style="font-size: 16px; color: #ccc;">Gesture Control System v3.1</p>
-            <div style="height: 2px; width: 100px; background: var(--primary); margin: 20px auto;"></div>
-            
-            <p>Requires <b>Camera Access</b> and <b>WebGL 2.0</b>.</p>
-            <p style="font-size: 12px; color: #888;">Ensure you are running on <b>localhost</b> or <b>https</b>.<br>File protocol (file://) blocks camera access.</p>
-            
-            <button id="start-btn" class="btn-large" onclick="app.start()">INITIALIZE SYSTEM</button>
-            <button id="mouse-mode-btn" class="btn-secondary" onclick="app.startMouseMode()">USE MOUSE MODE</button>
-            
-            <div id="loading-spinner" style="display:none; margin-top: 30px;">
-                <div class="spinner-border"></div>
-                <div id="loading-text">LOADING NEURAL NETWORKS...</div>
+    <!-- Header & Navigation --><header id="header" class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" data-target="home" class="nav-link flex items-center space-x-2">
+                 <svg class="h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                </svg>
+                <span class="text-2xl font-bold text-gray-800">Reshelf</span>
+            </a>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" data-target="shop" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">Shop</a>
+                <a href="#" data-target="bestsellers" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">Bestsellers</a>
+                <a href="#" data-target="collections" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">Collections</a>
+                <a href="#" data-target="our-story" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">Our Story</a>
+                <a href="#" data-target="about-us" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">About Us</a>
+                <a href="#" data-target="bulk-order" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">Bulk Orders</a>
+                <a href="#" data-target="partners" class="nav-link text-gray-600 hover:text-emerald-600 transition duration-300">For Partners</a>
+                 <!-- City Selector --><div class="relative">
+                    <button id="city-selector-button" class="flex items-center text-gray-600 hover:text-emerald-600 transition duration-300 border border-gray-300 px-3 py-1 rounded-lg">
+                        <i data-lucide="map-pin" class="h-4 w-4 mr-2"></i>
+                        <span id="current-city">Faisalabad</span>
+                        <i data-lucide="chevron-down" class="h-4 w-4 ml-1"></i>
+                    </button>
+                    <div id="city-dropdown" class="hidden absolute mt-2 w-48 bg-white rounded-lg shadow-xl z-50 -translate-x-1/2 left-1/2">
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Karachi</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Hyderabad</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Faisalabad</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Multan</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Lahore</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Islamabad</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Rawalpindi</a>
+                        <a href="#" class="city-option block px-4 py-2 text-gray-700 hover:bg-emerald-50">Peshawar</a>
+
+                    </div>
+                </div>
+                 <!-- Cart Icon --><a href="#" data-target="cart" class="nav-link relative text-gray-600 hover:text-emerald-600 transition duration-300">
+                    <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                    <span id="cart-item-count" class="absolute -top-2 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
             </div>
-
-            <div id="error-msg" class="error-box"></div>
-        </div>
-    </div>
-
-    <!-- Main UI -->
-    <div id="ui-layer">
-        <!-- Stats -->
-        <div id="stats-panel" class="hud-panel">
-            <h1>SYSTEM STATUS</h1>
-            <div class="data-row"><span class="data-label">FPS</span> <span id="fps-val" class="data-val">0</span></div>
-            <div class="data-row"><span class="data-label">PHYSICS OBJECTS</span> <span id="physics-count" class="data-val">0</span></div>
-            <div class="data-row"><span class="data-label">PARTICLES</span> <span id="particle-count" class="data-val">0</span></div>
-            <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:10px;">
-                <div class="data-row"><span class="data-label">INPUT</span> <span id="hand-status" class="data-val status-warn">OFFLINE</span></div>
-                <div class="data-row"><span class="data-label">GESTURE</span> <span id="gesture-val" class="data-val">NONE</span></div>
-                <div class="data-row"><span class="data-label">CONFIDENCE</span> <span id="confidence-val" class="data-val">0%</span></div>
-                <div class="data-row"><span class="data-label">VELOCITY</span> <span id="velocity-val" class="data-val">0.0 m/s</span></div>
+           
+            <div class="flex items-center md:hidden">
+                <a href="#" data-target="cart" class="nav-link relative text-gray-600 hover:text-emerald-600 transition duration-300 mr-4">
+                    <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+                    <span id="mobile-cart-item-count" class="absolute -top-2 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </a>
+                <button id="mobile-menu-button" class="text-gray-800 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
             </div>
+        </nav>
+        <!-- Mobile Menu --><div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#" data-target="shop" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">Shop</a>
+            <a href="#" data-target="bestsellers" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">Bestsellers</a>
+            <a href="#" data-target="collections" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">Collections</a>
+            <a href="#" data-target="our-story" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">Our Story</a>
+            <a href="#" data-target="about-us" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">About Us</a>
+            <a href="#" data-target="bulk-order" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">Bulk Orders</a>
+            <a href="#" data-target="partners" class="nav-link block py-2 text-gray-600 hover:text-emerald-600">For Partners</a>
         </div>
+    </header>
 
-        <!-- Controls -->
-        <div id="controls-panel" class="hud-panel">
-            <h1 style="color: var(--secondary);">OPERATOR GUIDE</h1>
-            <p><b>MODE: <span id="mode-display" style="color: #fff">SANDBOX</span></b></p>
-            <div style="margin: 15px 0; font-size: 13px;">
-                <div style="margin-bottom: 8px;">🖐 <b>OPEN PALM</b><br><span style="color:#aaa">Force Push / Repel Particles / Rotate View</span></div>
-                <div style="margin-bottom: 8px;">✊ <b>CLOSED FIST</b><br><span style="color:#aaa">Gravity Well / Grab Object / Red Shift</span></div>
-                <div style="margin-bottom: 8px;">☝ <b>INDEX POINT</b><br><span style="color:#aaa">Fire Projectile / Directional Laser</span></div>
-                <div style="margin-bottom: 8px;">👌 <b>PINCH</b><br><span style="color:#aaa">Precision Draw / Spawn Entity</span></div>
-            </div>
-            <div class="data-row" style="margin-top: 20px;">
-                <span class="data-label">AUDIO ENGINE</span>
-                <span class="data-val status-ok">ACTIVE</span>
-            </div>
-        </div>
+    <main>
+        <!-- Home Page Content --><div id="home" class="page-section active">
+            <!-- Hero Section --><section class="hero-bg text-white">
+                <div class="container mx-auto px-6 py-32 text-center">
+                    <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-4">Big Savings Meet Zero Waste.</h1>
+                    <p class="text-lg md:text-xl text-gray-200 mb-8 max-w-3xl mx-auto">Get incredible discounts on your favorite brands while fighting food waste in Pakistan. Quality food, unbeatable prices.</p>
+                    <a href="#" data-target="shop" class="nav-link bg-white text-emerald-700 font-bold px-8 py-4 rounded-lg hover:bg-gray-200 transition duration-300 text-lg shadow-lg">Start Shopping</a>
+                </div>
+            </section>
 
-        <!-- Mode Selector -->
-        <div id="mode-selector">
-            <button class="mode-btn active" onclick="app.setMode('sandbox')">PHY_SANDBOX</button>
-            <button class="mode-btn secondary" onclick="app.setMode('hologram')">HOLO_VIEW</button>
-            <button class="mode-btn" onclick="app.setMode('particles')">PARTICLE_SYS</button>
-        </div>
-    </div>
+            <!-- The Challenge Section --><section class="py-20 bg-white">
+                <div class="container mx-auto px-6 text-center">
+                    <div class="max-w-4xl mx-auto">
+                        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">The Challenge We Face in Pakistan</h2>
+                        <p class="text-gray-600 text-lg mb-8">A vast amount of food produced and imported in Pakistan never makes it to our tables. A significant portion of this includes perfectly safe packaged goods.</p>
+                        <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-8 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8 shadow-lg">
+                            <div class="text-7xl md:text-8xl font-extrabold text-red-600">27%</div>
+                            <p class="text-xl md:text-2xl text-red-800 text-left">Of food is estimated to be wasted in Pakistan, while millions face food insecurity. This includes surplus inventory and items nearing their best-before date from manufacturers and retailers.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <!-- Video -->
-    <div id="video-container">
-        <video id="input-video" playsinline></video>
-    </div>
-
-    <!-- Canvas -->
-    <div id="canvas-container"></div>
-
-
-    <!-- ======================= SCRIPTS ======================= -->
-
-    <!-- Import Map -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <!-- Dependencies: Pinned Versions for Stability -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1675466023/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"></script>
-
-    <!-- MAIN APPLICATION MODULE -->
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-
-        // ============================================================================
-        // 1. SHADERS & CONSTANTS
-        // ============================================================================
-
-        const SHADERS = {
-            // Particle Vertex Shader
-            particleVertex: `
-                attribute float size;
-                attribute vec3 customColor;
-                varying vec3 vColor;
-                void main() {
-                    vColor = customColor;
-                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    gl_PointSize = size * (300.0 / -mvPosition.z);
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            // Particle Fragment Shader
-            particleFragment: `
-                uniform vec3 color;
-                uniform sampler2D pointTexture;
-                varying vec3 vColor;
-                void main() {
-                    gl_FragColor = vec4(color * vColor, 1.0);
-                    gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
-                    if (gl_FragColor.a < 0.1) discard;
-                }
-            `,
-            // Hologram Vertex
-            holoVertex: `
-                varying vec2 vUv;
-                varying vec3 vNormal;
-                void main() {
-                    vUv = uv;
-                    vNormal = normalize(normalMatrix * normal);
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            // Hologram Fragment (Scanline effect)
-            holoFragment: `
-                uniform float time;
-                uniform vec3 color;
-                varying vec2 vUv;
-                varying vec3 vNormal;
-                
-                void main() {
-                    // Fresnel rim lighting
-                    vec3 viewDir = vec3(0.0, 0.0, 1.0);
-                    float fresnel = pow(1.0 - dot(vNormal, viewDir), 3.0);
-                    
-                    // Scanlines
-                    float scanline = sin(vUv.y * 50.0 - time * 5.0) * 0.5 + 0.5;
-                    float glitch = step(0.98, sin(time * 10.0 + vUv.y * 10.0));
-                    
-                    vec3 finalColor = color * (fresnel + 0.2) + (scanline * 0.1);
-                    finalColor += glitch * vec3(1.0); // White glitch
-                    
-                    gl_FragColor = vec4(finalColor, fresnel * 0.8 + 0.2);
-                }
-            `
-        };
-
-        // ============================================================================
-        // 2. UTILITIES
-        // ============================================================================
-
-        const Utils = {
-            randomRange: (min, max) => Math.random() * (max - min) + min,
+            <!-- Bestsellers & Top Discounts Preview --><section class="py-20 bg-gray-800">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-2">Top Deals This Week</h2>
+                    <p class="text-center text-gray-400 mb-12">Grab our most popular deals and top discounts before they're gone!</p>
+                    <div id="home-deals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <!-- Preview products will be dynamically inserted here --></div>
+                    <div class="text-center mt-12">
+                         <a href="#" data-target="shop" class="nav-link bg-white text-emerald-700 font-bold px-8 py-3 rounded-lg hover:bg-gray-200 transition duration-300 text-lg shadow-lg">View All Products</a>
+                    </div>
+                </div>
+            </section>
             
-            // Generates a soft glow texture for particles programmatically
-            createSprite: () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 32; canvas.height = 32;
-                const ctx = canvas.getContext('2d');
-                const grad = ctx.createRadialGradient(16,16,0, 16,16,16);
-                grad.addColorStop(0, 'rgba(255,255,255,1)');
-                grad.addColorStop(0.2, 'rgba(240,240,240,1)');
-                grad.addColorStop(0.5, 'rgba(200,200,200,0.5)');
-                grad.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0,0,32,32);
-                const tex = new THREE.CanvasTexture(canvas);
-                return tex;
-            },
+            <!-- We Are Reshelf Section --><section class="py-20 bg-emerald-50">
+                <div class="container mx-auto px-6 text-center">
+                    <div class="max-w-4xl mx-auto">
+                        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">We are Reshelf!</h2>
+                        <p class="text-xl italic text-gray-600 mb-8">Where Big Savings Meet Zero Waste</p>
+                        <div class="text-left text-gray-700 space-y-4 text-lg border-l-4 border-emerald-500 pl-8 py-4">
+                            <p>In Pakistan, a shocking <span class="font-bold text-red-600">27% of the food produced goes to waste.</span> An increasingly large portion of this includes packaged foods & beverages which are perfectly good but are surplus or nearing their best-before date.</p>
+                            <p>Waste of these items often occurs due to the lack of a transparent and trusted platform for buyers and sellers to connect. <span class="font-bold text-red-600">This is what we are changing with Reshelf.</span></p>
+                            <p>We specialize in high-quality surplus and short-dated products, passing <span class="font-bold text-red-600">huge savings</span> to our customers and driving <span class="font-bold text-red-600">zero waste</span> for our FMCG brand partners!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            // Create a Cyberpunk Grid Texture
-            createGridTexture: () => {
-                const c = document.createElement('canvas');
-                c.width = 512; c.height = 512;
-                const ctx = c.getContext('2d');
-                // Bg
-                ctx.fillStyle = '#050505'; ctx.fillRect(0,0,512,512);
-                // Grid
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#00f3ff';
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = '#00f3ff';
-                ctx.beginPath();
-                for(let i=0; i<=512; i+=64) {
-                    ctx.moveTo(i,0); ctx.lineTo(i,512);
-                    ctx.moveTo(0,i); ctx.lineTo(512,i);
-                }
-                ctx.stroke();
-                // Tech markings
-                ctx.fillStyle = '#ff0055';
-                ctx.shadowColor = '#ff0055';
-                for(let i=0; i<8; i++) {
-                    const x = Math.floor(Math.random()*8)*64 + 10;
-                    const y = Math.floor(Math.random()*8)*64 + 10;
-                    ctx.fillRect(x,y,20,5);
-                }
-                const tex = new THREE.CanvasTexture(c);
-                tex.wrapS = THREE.RepeatWrapping;
-                tex.wrapT = THREE.RepeatWrapping;
-                return tex;
-            }
-        };
-
-        // ============================================================================
-        // 3. AUDIO ENGINE (Advanced)
-        // ============================================================================
-
-        class AudioEngine {
-            constructor() {
-                this.ctx = null;
-                this.masterGain = null;
-                this.initialized = false;
-            }
-
-            async init() {
-                if(this.initialized) return;
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.ctx = new AudioContext();
-                    this.masterGain = this.ctx.createGain();
-                    this.masterGain.gain.value = 0.3;
-                    this.masterGain.connect(this.ctx.destination);
-                    
-                    // Create ambient drone
-                    this.createDrone();
-                    this.initialized = true;
-                } catch(e) {
-                    console.warn("Audio init failed:", e);
-                }
-            }
-
-            createDrone() {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                const filter = this.ctx.createBiquadFilter();
-                
-                osc.type = 'sawtooth';
-                osc.frequency.value = 40; // Low drone
-                
-                filter.type = 'lowpass';
-                filter.frequency.value = 200;
-                
-                gain.gain.value = 0.1;
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
-                
-                osc.start();
-                
-                // LFO for filter
-                const lfo = this.ctx.createOscillator();
-                lfo.frequency.value = 0.2;
-                const lfoGain = this.ctx.createGain();
-                lfoGain.gain.value = 100;
-                lfo.connect(lfoGain);
-                lfoGain.connect(filter.frequency);
-                lfo.start();
-            }
-
-            playSFX(type) {
-                if(!this.initialized) return;
-                
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                if (type === 'hover') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
-                } else if (type === 'grab') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
-                } else if (type === 'shoot') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
-                }
-
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.5);
-            }
-        }
-
-        // ============================================================================
-        // 4. PHYSICS ENGINE (Cannon.js)
-        // ============================================================================
-
-        class PhysicsEngine {
-            constructor() {
-                this.world = new CANNON.World();
-                this.world.gravity.set(0, -9.82, 0);
-                this.world.broadphase = new CANNON.SAPBroadphase(this.world);
-                this.world.solver.iterations = 10;
-
-                // Materials
-                this.matDefault = new CANNON.Material();
-                this.matGround = new CANNON.Material();
-                
-                const contactMat = new CANNON.ContactMaterial(this.matGround, this.matDefault, {
-                    friction: 0.4, restitution: 0.5
-                });
-                this.world.addContactMaterial(contactMat);
-
-                // Ground
-                const groundBody = new CANNON.Body({ mass: 0, material: this.matGround });
-                groundBody.addShape(new CANNON.Plane());
-                groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
-                this.world.addBody(groundBody);
-                
-                this.bodies = []; // Track active bodies
-            }
-
-            addBody(mesh, type='box', mass=1, size=1) {
-                const shape = type === 'box' 
-                    ? new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2))
-                    : new CANNON.Sphere(size);
-                
-                const body = new CANNON.Body({ mass: mass, material: this.matDefault });
-                body.addShape(shape);
-                body.position.copy(mesh.position);
-                body.quaternion.copy(mesh.quaternion);
-                
-                // Damping to stop things flying endlessly
-                body.linearDamping = 0.1;
-                body.angularDamping = 0.1;
-                
-                this.world.addBody(body);
-                this.bodies.push({ mesh, body, type });
-                return body;
-            }
-
-            removeBody(obj) {
-                this.world.removeBody(obj.body);
-                this.bodies = this.bodies.filter(b => b !== obj);
-            }
-
-            update(dt) {
-                this.world.step(1/60, dt, 3);
-                
-                // Sync Visuals
-                for (const obj of this.bodies) {
-                    obj.mesh.position.copy(obj.body.position);
-                    obj.mesh.quaternion.copy(obj.body.quaternion);
-                    
-                    // Simple "kill" floor
-                    if(obj.body.position.y < -10) {
-                        obj.body.position.set(0, 5, 0);
-                        obj.body.velocity.set(0,0,0);
-                    }
-                }
-            }
+            <!-- Our Purpose Section --><section class="py-20 bg-white">
+                <div class="container mx-auto px-6">
+                    <div class="flex flex-col lg:flex-row items-center gap-12">
+                         <div class="lg:w-1/2">
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our Purpose: A Win-Win for Pakistan</h2>
+                            <p class="text-gray-600 text-lg mb-6">Our mission is built on a simple idea: creating value from surplus. For Pakistani families, we make everyday essentials more affordable. For our business partners, we provide a smart, profitable, and sustainable solution for excess inventory. Together, we are tackling the national food waste challenge head-on, building a more resilient and resourceful circular economy for everyone.</p>
+                            <div class="space-y-4">
+                                <div class="flex items-start"><i data-lucide="check-circle-2" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><p class="text-gray-700"><strong>Save Money:</strong> Access your favorite brands at prices you won't find anywhere else.</p></div>
+                                <div class="flex items-start"><i data-lucide="check-circle-2" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><p class="text-gray-700"><strong>Reduce Waste:</strong> Every purchase you make helps keep perfectly good food out of landfills.</p></div>
+                                <div class="flex items-start"><i data-lucide="check-circle-2" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><p class="text-gray-700"><strong>Support Businesses:</strong> We help brands, distributors, and importers recover costs from surplus stock.</p></div>
+                            </div>
+                        </div>
+                        <div class="lg:w-1/2">
+                            <img src="https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?q=80&w=2574&auto=format&fit=crop" alt="Happy person shopping for groceries" class="rounded-2xl shadow-2xl w-full">
+                        </div>
+                    </div>
+                </div>
+            </section>
             
-            clear() {
-                this.bodies.forEach(b => this.world.removeBody(b.body));
-                this.bodies = [];
-            }
-        }
+            <!-- Our Partners Section --><section class="py-20 bg-gray-50">
+                <div class="container mx-auto px-6 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Trusted by Leading Brands</h2>
+                    <p class="text-gray-600 text-lg max-w-3xl mx-auto mb-12">We partner with some of Pakistan's most respected FMCG manufacturers, importers, and distributors to bring you incredible deals.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 items-center">
+                        <img src="https://static.wikia.nocookie.net/logo-timeline/images/5/57/Cadbury-droplet-1.png/revision/latest?cb=20240304172530" alt="Partner Brand Logo 1" class="mx-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Tresemme_new_logo.png" alt="Partner Brand Logo 2" class="mx-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300">
+                        <img src="https://aqualine.com.pk/wp-content/uploads/2020/11/Dalda.png" alt="Partner Brand Logo 3" class="mx-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQp6TQ-HDKUL2W3rG-Fbvl3i4PViAYNwW5yYg&s" alt="Partner Brand Logo 4" class="mx-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300">
+                        <img src="https://ilcdnstatic.investorslounge.com//ResearchImages/FullImage//ff605605-62ee-4b27-ac83-91798f7c13b1.png" alt="Partner Brand Logo 5" class="mx-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300">
+                    </div>
+                     <div class="text-center mt-12">
+                        <a href="#" data-target="partners" class="nav-link bg-emerald-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-emerald-700 transition duration-300 text-lg shadow-lg">Become a Partner</a>
+                    </div>
+                </div>
+            </section>
+        </div>
 
-        // ============================================================================
-        // 5. PARTICLE SYSTEM (GPU)
-        // ============================================================================
+        <!-- Shop Page --><section id="shop" class="page-section py-20 bg-gray-100">
+             <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">All Products</h2>
+                <div id="shop-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Products will be dynamically inserted here --></div>
+            </div>
+        </section>
 
-        class ParticleSystem {
-            constructor(scene, count=10000) {
-                this.count = count;
-                this.scene = scene;
-                this.geometry = new THREE.BufferGeometry();
-                this.material = null;
-                this.mesh = null;
-                this.positions = new Float32Array(count * 3);
-                this.velocities = new Float32Array(count * 3);
-                this.colors = new Float32Array(count * 3);
-                this.sizes = new Float32Array(count);
-                
-                this.init();
-            }
+        <!-- Bestsellers Page --><section id="bestsellers" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Our Bestsellers</h2>
+                 <div id="bestsellers-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Bestseller products will be dynamically inserted here --></div>
+            </div>
+        </section>
 
-            init() {
-                const color = new THREE.Color();
-                
-                for(let i=0; i<this.count; i++) {
-                    const i3 = i*3;
-                    this.positions[i3] = (Math.random() - 0.5) * 20;
-                    this.positions[i3+1] = (Math.random() - 0.5) * 20 + 5;
-                    this.positions[i3+2] = (Math.random() - 0.5) * 10;
-                    
-                    this.velocities[i3] = (Math.random() - 0.5) * 0.1;
-                    this.velocities[i3+1] = (Math.random() - 0.5) * 0.1;
-                    this.velocities[i3+2] = (Math.random() - 0.5) * 0.1;
-                    
-                    color.setHSL(Math.random() * 0.1 + 0.5, 0.8, 0.5); // Blue/Cyan range
-                    this.colors[i3] = color.r;
-                    this.colors[i3+1] = color.g;
-                    this.colors[i3+2] = color.b;
-                    
-                    this.sizes[i] = Math.random() * 2;
-                }
-                
-                this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
-                this.geometry.setAttribute('customColor', new THREE.BufferAttribute(this.colors, 3));
-                this.geometry.setAttribute('size', new THREE.BufferAttribute(this.sizes, 1));
-                
-                this.material = new THREE.ShaderMaterial({
-                    uniforms: {
-                        color: { value: new THREE.Color(0xffffff) },
-                        pointTexture: { value: Utils.createSprite() }
-                    },
-                    vertexShader: SHADERS.particleVertex,
-                    fragmentShader: SHADERS.particleFragment,
-                    blending: THREE.AdditiveBlending,
-                    depthTest: false,
-                    transparent: true
-                });
-                
-                this.mesh = new THREE.Points(this.geometry, this.material);
-                this.scene.add(this.mesh);
-                this.mesh.visible = false;
-            }
+        <!-- Collections Page --><section id="collections" class="page-section py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">FMCG Product Collections</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-pantry-staples"><i data-lucide="shopping-basket" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Pantry Staples</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-snacks"><i data-lucide="cookie" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Snacks & Confectionery</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-beverages"><i data-lucide="glass-water" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Beverages</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-dairy"><i data-lucide="milk" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Dairy & Chilled</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-personal-care"><i data-lucide="sparkles" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Personal Care</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-household"><i data-lucide="home" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Household Supplies</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-baby"><i data-lucide="baby" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Baby Products</h3></div>
+                    <div class="collection-card-link group bg-gray-50 p-6 rounded-xl shadow-lg text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300" data-target="collection-pet"><i data-lucide="bone" class="h-16 w-16 mx-auto text-emerald-500 group-hover:text-emerald-600 transition-colors mb-4 pointer-events-none"></i><h3 class="font-bold text-lg group-hover:text-emerald-600 pointer-events-none">Pet Care</h3></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Individual Collection Pages --><section id="collection-pantry-staples" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Pantry Staples</h2>
+                <div id="pantry-staples-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            </div>
+        </section>
+        <section id="collection-snacks" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Snacks & Confectionery</h2>
+                <div id="snacks-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            </div>
+        </section>
+        <section id="collection-beverages" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Beverages</h2>
+                <div id="beverages-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            </div>
+        </section>
+        <section id="collection-dairy" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Dairy & Chilled</h2>
+            <div id="dairy-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </section>
+        <section id="collection-personal-care" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Personal Care</h2>
+            <div id="personal-care-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </section>
+        <section id="collection-household" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Household Supplies</h2>
+            <div id="household-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </section>
+        <section id="collection-baby" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Baby Products</h2>
+            <div id="baby-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </section>
+        <section id="collection-pet" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6"><h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Pet Care</h2>
+            <div id="pet-product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </section>
 
-            update(targetPos, isAttracting, isRepelling, dt) {
-                if(!this.mesh.visible) return;
-                
-                const positions = this.geometry.attributes.position.array;
-                
-                for(let i=0; i<this.count; i++) {
-                    const i3 = i*3;
-                    
-                    // Basic Brownian motion
-                    let vx = this.velocities[i3];
-                    let vy = this.velocities[i3+1];
-                    let vz = this.velocities[i3+2];
-                    
-                    let px = positions[i3];
-                    let py = positions[i3+1];
-                    let pz = positions[i3+2];
-                    
-                    // Interaction
-                    if(targetPos) {
-                        const dx = targetPos.x - px;
-                        const dy = targetPos.y - py;
-                        const dz = targetPos.z - pz;
-                        const distSq = dx*dx + dy*dy + dz*dz;
+        <!-- Product Detail Page --><section id="product-detail" class="page-section py-12 md:py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                    <!-- Product Image --><div class="relative w-full">
+                       <img id="main-product-image" src="" alt="Main Product Image" class="w-full aspect-square object-cover rounded-lg shadow-md">
+                       <span id="product-detail-discount" class="absolute top-4 left-4 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded"></span>
+                    </div>
+
+                    <!-- Product Info --><div>
+                        <h1 id="product-detail-name" class="text-3xl md:text-4xl font-bold text-gray-800 mb-2"></h1>
+                        <div class="flex items-center mb-4">
+                            <div class="flex items-baseline mr-4">
+                                <span class="text-gray-600 mr-2">Reshelf Price:</span>
+                                <span id="product-detail-price" class="text-3xl font-bold text-emerald-600"></span>
+                            </div>
+                            <div class="flex items-baseline text-gray-500">
+                                <span class="mr-2">MRP:</span>
+                                <span id="product-detail-original-price" class="line-through"></span>
+                            </div>
+                        </div>
+                        <p class="text-green-600 font-semibold mb-4">Smart Choice — Order and enjoy great savings.</p>
+                        <p class="text-gray-700 mb-4"><span class="font-semibold">Best Before:</span> 30-04-2026</p>
                         
-                        if(distSq < 25) { // Influence radius
-                            const force = 10 / (distSq + 0.1);
-                            if(isAttracting) {
-                                vx += dx * force * dt;
-                                vy += dy * force * dt;
-                                vz += dz * force * dt;
-                            } else if (isRepelling) {
-                                vx -= dx * force * 2 * dt;
-                                vy -= dy * force * 2 * dt;
-                                vz -= dz * force * 2 * dt;
-                            } else {
-                                // Gentle swirl
-                                vx += -dz * force * 0.5 * dt;
-                                vz += dx * force * 0.5 * dt;
-                            }
-                        }
-                    }
-                    
-                    // Dampen
-                    vx *= 0.98;
-                    vy *= 0.98;
-                    vz *= 0.98;
-                    
-                    // Apply
-                    px += vx;
-                    py += vy;
-                    pz += vz;
-                    
-                    // Bounds check (respawn)
-                    if(Math.abs(px) > 15 || Math.abs(py-5) > 10 || Math.abs(pz) > 10) {
-                        px = (Math.random() - 0.5) * 10;
-                        py = (Math.random() - 0.5) * 10 + 5;
-                        pz = (Math.random() - 0.5) * 10;
-                        vx = 0; vy = 0; vz = 0;
-                    }
-                    
-                    positions[i3] = px;
-                    positions[i3+1] = py;
-                    positions[i3+2] = pz;
-                    
-                    this.velocities[i3] = vx;
-                    this.velocities[i3+1] = vy;
-                    this.velocities[i3+2] = vz;
-                }
-                
-                this.geometry.attributes.position.needsUpdate = true;
-            }
-        }
+                        <div class="mb-6">
+                            <label for="product-quantity-input" class="font-semibold text-gray-700 mb-2 block">Quantity:</label>
+                            <div class="flex items-center border border-gray-300 rounded-md w-fit">
+                                <button id="quantity-decrease" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-l-md">-</button>
+                                <input type="text" id="product-quantity-input" value="1" class="w-12 text-center border-l border-r">
+                                <button id="quantity-increase" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-r-md">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <button id="add-to-cart-button" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300 flex items-center justify-center space-x-2">
+                                <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+                                <span>Add to Cart</span>
+                           </button>
+                           <button class="w-full bg-emerald-800 text-white font-bold py-3 rounded-lg hover:bg-emerald-900 transition duration-300">Buy It Now</button>
+                        </div>
+                        <br>
+                         <button href="#" data-target="bulk-order" class="nav-link text-center w-full mt-4 bg-emerald-800 text-white font-bold py-3 rounded-lg hover:bg-emerald-900 transition duration-300">Place a Bulk Order</button>
+                    </div>
+                </div>
 
-        // ============================================================================
-        // 6. VISUAL ENGINE (Three.js)
-        // ============================================================================
+                <!-- Accordion for more details -->
+                     <div class="border-b">
+                        <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                           <span>Product Description</span>
+                           <i data-lucide="chevron-down" class="transition-transform"></i>
+                        </button>
+                        <div class="accordion-content pb-4 text-gray-600">
+                           <p id="product-detail-description"></p>
+                        </div>
+                     </div>
+                     <div class="border-b">
+                        <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                           <span>Why Reshelf?</span>
+                           <i data-lucide="chevron-down" class="transition-transform"></i>
+                        </button>
+                        <div class="accordion-content pb-4 text-gray-600">
+                           <ul class="list-disc list-inside space-y-2">
+                                <li><strong>Hassle-Free Delivery:</strong> Delivery within 2-5 Business Days.</li>
+                                <li><strong>Quality & Safety:</strong> All products are verified and safe for consumption. We adhere to strict quality controls.</li>
+                                <li><strong>Unbeatable Prices:</strong> By sourcing surplus, we pass the savings directly to you.</li>
+                           </ul>
+                        </div>
+                     </div>
+                      <div class="border-b">
+                        <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                           <span>Key Features</span>
+                           <i data-lucide="chevron-down" class="transition-transform"></i>
+                        </button>
+                        <div class="accordion-content pb-4 text-gray-600">
+                            <ul id="product-detail-features" class="list-disc list-inside">
+                               <!-- Key features will be populated dynamically --></ul>
+                        </div>
+                     </div>
+                     <div class="border-b">
+                        <button class="accordion-button w-full flex justify-between items-center py-4 text-left font-semibold text-lg">
+                           <span>Disclaimer</span>
+                            <i data-lucide="chevron-down" class="transition-transform"></i>
+                        </button>
+                        <div class="accordion-content pb-4 text-gray-600">
+                            <p>Product packaging may vary from the image shown. Please read labels, warnings, and directions before using or consuming a product.</p>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cart Page --><section id="cart" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Your Shopping Cart</h2>
+                <div id="cart-content" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- This will be populated dynamically --></div>
+            </div>
+        </section>
 
-        class VisualEngine {
-            constructor() {
-                this.container = document.getElementById('canvas-container');
-                this.scene = new THREE.Scene();
-                this.scene.fog = new THREE.FogExp2(0x050505, 0.015);
-                
-                // Camera
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
-                this.camera.position.set(0, 4, 10);
-                
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                this.renderer.toneMapping = THREE.ReinhardToneMapping;
-                this.container.appendChild(this.renderer.domElement);
-                
-                // Composer (Bloom)
-                this.composer = new EffectComposer(this.renderer);
-                const renderPass = new RenderPass(this.scene, this.camera);
-                this.composer.addPass(renderPass);
-                
-                const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-                bloomPass.strength = 1.2;
-                bloomPass.radius = 0.5;
-                bloomPass.threshold = 0.1;
-                this.composer.addPass(bloomPass);
+        <!-- Checkout Page --><section id="checkout" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">Checkout</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 bg-white p-8 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-6">Shipping Information</h3>
+                        <form id="checkout-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input type="text" id="name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                                <input type="text" id="address" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                                <input type="text" id="city" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                <input type="tel" id="phone" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                        </form>
+                    </div>
+                    <div id="checkout-summary-container">
+                        <!-- Checkout summary will be rendered here by JS --></div>
+                </div>
+            </div>
+        </section>
 
-                // Controls
-                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-                
-                // Environment
-                this.setupEnvironment();
-                
-                // Hand Visualizer
-                this.handMesh = new THREE.Mesh(
-                    new THREE.IcosahedronGeometry(0.2, 1),
-                    new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.8 })
-                );
-                this.scene.add(this.handMesh);
+        <!-- Our Story Page --><div id="our-story" class="page-section">
+             <section class="py-20 bg-white">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-16">
+                        <h2 class="text-4xl md:text-5xl font-extrabold text-gray-800">Our Story</h2>
+                        <p class="text-xl text-gray-500 mt-4">The journey from a simple observation to a nationwide mission.</p>
+                    </div>
+                    <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                        <div class="lg:w-1/3">
+                            <img src="CEO.jpeg" alt="Abdul Hadi Munir, Founder of Reshelf" class="rounded-2xl shadow-2xl w-full">
+                            <h4 class="mt-4 text-center text-2xl font-bold">Abdul Hadi Munir</h4>
+                            <p class="text-center text-gray-600">Founder & CEO, Reshelf</p>
+                        </div>
+                        <div class="lg:w-2/3">
+                            <div class="space-y-6 text-lg text-gray-700">
+                                <p><span class="text-4xl text-emerald-500 font-bold float-left mr-3 mt-1">"I</span>t all started with a trip to the mall. I saw a store giving massive discounts on food that was close to its expiry date. While the savings were great, I noticed there was no system to check if the products were still truly high-quality. It was a gamble for the customers."</p>
+                                <p>That observation sparked an idea. I began researching and was shocked to learn that nearly 27% (approx 1.7 Billion $ worth) of food is wasted in Pakistan every year. So much of this waste includes perfectly good, packaged items from trusted brands that are simply surplus or short-dated.</p>
+                                <p class="font-semibold text-gray-800">This is where Reshelf was born. We built a brand to bridge this gap, but with one crucial difference: an absolute commitment to quality and trust.</p>
+                                <div>
+                                    <h4 class="text-2xl font-bold text-emerald-700 mb-3">Our 5-Step Verification Promise</h4>
+                                    <p>Before any product is 'reshelved', it goes through our rigorous 5-step verification process to ensure it meets our high standards:</p>
+                                    <ul class="mt-4 space-y-3 list-none">
+                                        <li class="flex items-start"><i data-lucide="shield-check" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><div><strong>Labelling Test:</strong> We confirm all information on the packaging is clear, correct, and untampered with.</div></li>
+                                        <li class="flex items-start"><i data-lucide="shield-check" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><div><strong>Taste Test:</strong> We conduct sensory evaluations to ensure the product's flavor profile is exactly as the manufacturer intended.</div></li>
+                                        <li class="flex items-start"><i data-lucide="shield-check" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><div><strong>Smell Test:</strong> Our team checks for any off-odors to guarantee freshness.</div></li>
+                                        <li class="flex items-start"><i data-lucide="shield-check" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><div><strong>Texture Test:</strong> We verify that the product's physical consistency meets quality standards.</div></li>
+                                        <li class="flex items-start"><i data-lucide="shield-check" class="h-6 w-6 text-emerald-600 mr-3 shrink-0 mt-1"></i><div><strong>Batch Confirmation:</strong> Most importantly, we confirm the product batch with the brand to ensure authenticity and traceability.</div></li>
+                                    </ul>
+                                </div>
+                                <p>Reshelf is more than just a marketplace; it's a movement towards a more sustainable Pakistan, where everyone can access quality food at fair prices, and nothing good goes to waste.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                // Laser Line (for pointing)
-                const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-10)]);
-                this.laserLine = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff0055, transparent: true, opacity: 0 }));
-                this.scene.add(this.laserLine);
-                
-                this.projectiles = [];
-            }
+                    <!-- Team Members Section --><div class="mt-20 pt-10 border-t border-gray-200">
+                        <h3 class="text-3xl font-bold text-center text-gray-800 mb-12">Meet the Team</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                            <div class="text-center">
+                                <img src="https://placehold.co/200x200/e2e8f0/334155?text=Team+Member+1" alt="Team Member 1" class="w-40 h-40 object-cover rounded-full mx-auto shadow-lg mb-4">
+                                <h4 class="text-xl font-semibold">Name Surname 1</h4>
+                                <p class="text-gray-600">Role 1</p>
+                            </div>
+                            <div class="text-center">
+                                <img src="https://placehold.co/200x200/e2e8f0/334155?text=Team+Member+2" alt="Team Member 2" class="w-40 h-40 object-cover rounded-full mx-auto shadow-lg mb-4">
+                                <h4 class="text-xl font-semibold">Name Surname 2</h4>
+                                <p class="text-gray-600">Role 2</p>
+                            </div>
+                            <div class="text-center">
+                                <img src="https://placehold.co/200x200/e2e8f0/334155?text=Team+Member+3" alt="Team Member 3" class="w-40 h-40 object-cover rounded-full mx-auto shadow-lg mb-4">
+                                <h4 class="text-xl font-semibold">Name Surname 3</h4>
+                                <p class="text-gray-600">Role 3</p>
+                            </div>
+                            <div class="text-center">
+                                <img src="https://placehold.co/200x200/e2e8f0/334155?text=Team+Member+4" alt="Team Member 4" class="w-40 h-40 object-cover rounded-full mx-auto shadow-lg mb-4">
+                                <h4 class="text-xl font-semibold">Name Surname 4</h4>
+                                <p class="text-gray-600">Role 4</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
-            setupEnvironment() {
-                // Lights
-                const ambient = new THREE.AmbientLight(0x222222);
-                this.scene.add(ambient);
-                
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-                dirLight.position.set(5, 10, 7);
-                this.scene.add(dirLight);
 
-                const blueLight = new THREE.PointLight(0x00f3ff, 2, 20);
-                blueLight.position.set(-5, 5, 0);
-                this.scene.add(blueLight);
-                
-                const redLight = new THREE.PointLight(0xff0055, 2, 20);
-                redLight.position.set(5, 5, 0);
-                this.scene.add(redLight);
+        <!-- About Us Page --><div id="about-us" class="page-section">
+            <section class="py-20 bg-white">
+                <div class="container mx-auto px-6">
+                    <div class="flex flex-col lg:flex-row items-center gap-12">
+                        <div class="lg:w-1/2"><img src="https://media.licdn.com/dms/image/v2/D4D12AQFNJAoqHkybKQ/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1715876154148?e=1762387200&v=beta&t=XnQgXB7lBZqbCNYFggcUJqgsl_nOCuVV96UdQ0K8ttU" alt="Market stall with fresh produce" class="rounded-2xl shadow-2xl w-full"></div>
+                        <div class="lg:w-1/2">
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About Reshelf</h2>
+                            <p class="text-gray-600 text-lg mb-6">In Pakistan, surplus and short-dated packaged foods often go to waste due to the lack of a trusted platform connecting sellers with buyers. This is what we are changing with Reshelf.</p>
+                            <p class="text-gray-600 text-lg mb-6">We specialize in rescuing high-quality surplus inventory from FMCG brands, passing on <span class="font-bold text-emerald-600">huge savings</span> to our customers and driving <span class="font-bold text-emerald-600">zero waste</span> for our brand partners!</p>
+                            <p class="text-2xl font-semibold italic text-gray-700">This is Reshelf, where “Big Savings Meet Zero Waste”!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
-                // Floor
-                const grid = new THREE.GridHelper(60, 60, 0x333333, 0x111111);
-                this.scene.add(grid);
+        <!-- For Partners Page --><div id="partners" class="page-section">
+             <section class="py-20 bg-emerald-700 text-white">
+                <div class="container mx-auto px-6 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">Are you an FMCG Brand, Distributor, or Retailer?</h2>
+                    <p class="text-emerald-200 text-lg max-w-3xl mx-auto mb-8">Turn your surplus inventory into revenue, meet your sustainability targets, and connect with a new audience. Partner with Reshelf to build a more sustainable future.</p>
+                    <a href="mailto:partners@reshelf.pk" class="bg-white text-emerald-700 font-bold px-8 py-4 rounded-lg hover:bg-gray-200 transition duration-300 text-lg shadow-lg">Partner With Us</a>
+                </div>
+            </section>
+        </div>
+
+        <!-- Bulk Order Page --><section id="bulk-order" class="page-section py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800">Bulk & Wholesale Orders</h2>
+                    <p class="text-gray-600 mt-4 max-w-2xl mx-auto">Get the best prices for your business by ordering in bulk. Fill out the form below to get a custom quote from our team.</p>
+                </div>
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                    <form id="bulk-order-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="bulk-name" class="block text-sm font-medium text-gray-700">Your Name</label>
+                                <input type="text" id="bulk-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="bulk-business-name" class="block text-sm font-medium text-gray-700">Business Name</label>
+                                <input type="text" id="bulk-business-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="bulk-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="bulk-email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="bulk-phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                <input type="tel" id="bulk-phone" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="bulk-address" class="block text-sm font-medium text-gray-700">Delivery Address</label>
+                                <input type="text" id="bulk-address" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="bulk-products" class="block text-sm font-medium text-gray-700">Products & Estimated Quantities</label>
+                                <textarea id="bulk-products" rows="5" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="e.g., Dalda Cooking Oil (3L) - 50 units, Lays Masala Crisps - 10 cartons"></textarea>
+                            </div>
+                        </div>
+                        <div class="text-right mt-6">
+                            <button type="submit" class="bg-emerald-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-emerald-700 transition duration-300">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <!-- Footer --><footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Reshelf</h3>
+                    <p class="text-gray-400">Big Savings, Zero Waste.</p>
+                    <p class="text-gray-400 mt-2">© 2024 Reshelf Pakistan. All Rights Reserved.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Quick Links</h3>
+                    <ul>
+                        <li><a href="#" data-target="shop" class="nav-link text-gray-400 hover:text-white">Shop</a></li>
+                        <li class="mt-2"><a href="#" data-target="our-story" class="nav-link text-gray-400 hover:text-white">Our Story</a></li>
+                        <li class="mt-2"><a href="#" data-target="about-us" class="nav-link text-gray-400 hover:text-white">About Us</a></li>
+                        <li class="mt-2"><a href="#" data-target="bulk-order" class="nav-link text-gray-400 hover:text-white">Bulk Orders</a></li>
+                        <li class="mt-2"><a href="#" data-target="partners" class="nav-link text-gray-400 hover:text-white">For Partners</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Connect With Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" aria-label="Facebook" class="text-gray-400 hover:text-white transition-colors"><svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg></a>
+                        <a href="#" aria-label="Instagram" class="text-gray-400 hover:text-white transition-colors"><svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0 3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.689-.073-4.948-.073zM12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+                        <a href="#" aria-label="Twitter" class="text-gray-400 hover:text-white transition-colors"><svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616v.064c0 2.298 1.634 4.218 3.791 4.649-.69.188-1.43.238-2.178.088.604 1.88 2.353 3.256 4.435 3.294-1.711 1.341-3.881 2.138-6.22 2.138-.403 0-.8-.023-1.194-.069 2.203 1.418 4.825 2.24 7.643 2.24 9.171 0 14.19-7.823 13.98-14.646.958-.69 1.79-1.557 2.457-2.548z"/></svg></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification --><div id="toast-notification" class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg">
+        <span id="toast-message">Item added to cart!</span>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+
+            const products = [
+                // Pantry Staples (4)
+                { id: 1, name: 'Knorr Instant Noodles', category: 'pantry-staples', price: 180, originalPrice: 220, discount: 18, isBestseller: true, image: 'https://sbstore.com.pk/public/uploads/all/rJHJFcPlYWmwXIHWGFjolN8326VMsSTipDYA3mWs.webp', description: 'Quick, easy, and delicious, Knorr Instant Noodles are the perfect solution for a quick meal. Full of flavour and ready in minutes.', keyFeatures: ['Ready in 2-3 minutes', 'Chatpata flavor', 'Single serving pack'] },
+                { id: 2, name: 'Dalda Cooking Oil (3L)', category: 'pantry-staples', price: 1200, originalPrice: 1500, discount: 20, isBestseller: true, image: 'https://www.cartpk.com/media/catalog/product/cache/ccf016c098f64509830f131aff46d4ef/d/a/dalda-oil-box_1_2_2.jpg', description: 'Dalda Cooking Oil is a trusted choice in Pakistani kitchens, fortified with Vitamins A & D. Ideal for frying, cooking, and baking.', keyFeatures: ['Fortified with Vitamins A & D', 'Low in cholesterol', '3 Litre value jug'] },
+                { id: 3, name: 'Shan Biryani Masala Mix', category: 'pantry-staples', price: 100, originalPrice: 120, discount: 17, image: 'https://www.chohans.co.za/cdn/shop/products/IMG_2948_1200x1200.png?v=1742033385', description: 'Create authentic, delicious Biryani every time with Shan Biryani Masala. A perfect blend of rich and aromatic spices for an unforgettable meal.', keyFeatures: ['Authentic taste', 'Easy to follow recipe on box', 'Serves 6-8 people'] },
+                { id: 4, name: 'Lipton Yellow Label Tea', category: 'pantry-staples', price: 650, originalPrice: 800, discount: 19, image: 'https://nayabazar.pk/images/products/dXhcvJD9Hh9EDnv.webp', description: 'Start your day with the rich aroma and taste of Lipton Yellow Label. Made from the finest tea leaves for a refreshing experience.', keyFeatures: ['Rich, aromatic flavor', 'Sourced from high-quality tea leaves', '475g family pack'] },
+                
+                // Snacks & Confectionery (4)
+                { id: 5, name: 'Lays Masala Crisps', category: 'snacks', price: 35, originalPrice: 50, discount: 30, isBestseller: true, image: 'https://www.incity.pk/wp-content/uploads/2021/01/lays-masala-50-rs.png', description: 'Enjoy the irresistible, spicy masala flavor of Lays. These crunchy potato chips are the perfect snack for any time of the day.', keyFeatures: ['Crunchy potato chips', 'Spicy Masala flavor', 'Large sharing pack'] },
+                { id: 6, name: 'Cadbury Dairy Milk', category: 'snacks', price: 299, originalPrice: 499, discount: 40, isBestseller: true, image: 'https://shopatshams.com.pk/cdn/shop/products/7622210644817_900x.jpg?v=1634212532', description: 'Indulge in the rich, creamy taste of Cadbury Dairy Milk chocolate. Made with a glass and a half of full cream milk in every half pound.', keyFeatures: ['Classic creamy milk chocolate', 'Made from sustainably sourced cocoa', '100g bar'] },
+                { id: 7, name: 'Peek Freans Sooper Cookies', category: 'snacks', price: 75, originalPrice: 100, discount: 25, image: 'https://www.dsmonline.pk/media/catalog/product/cache/e626209f6586797a49e0d0a395e17e33/p/f/pf_sooper_family_pack.png', description: 'Pakistan\'s favorite egg and milk cookie, Sooper is loved for its wholesome goodness and delicious, melt-in-your-mouth texture.', keyFeatures: ['Egg and milk cookie', 'Melt-in-your-mouth texture', 'Family pack'] },
+                { id: 8, name: 'Oreo Biscuits Family Pack', category: 'snacks', price: 120, originalPrice: 180, discount: 30, image: 'https://m.media-amazon.com/images/I/71IXYPKKFIL._UF350,350_QL80_.jpg', description: 'Twist, Lick, Dunk! Enjoy the classic combination of a creamy vanilla filling sandwiched between two rich chocolate wafers.', keyFeatures: ['Rich vanilla creme filling', 'Crunchy chocolate wafers', 'Perfect for sharing'] },
+
+                // Beverages (4)
+                { id: 9, name: 'Coca-Cola (1.5L)', category: 'beverages', price: 150, originalPrice: 180, discount: 17, isBestseller: true, image: 'https://cashgroupmalta.com/wp-content/uploads/2024/09/coca-cola-original-15l-bottle.webp', description: 'The original and refreshing taste of Coca-Cola. Best served chilled for the ultimate refreshment.', keyFeatures: ['Original taste', '1.5 Litre bottle', 'Perfect for sharing'] },
+                { id: 10, name: 'Nestle Fruita Vitals (Apple)', category: 'beverages', price: 149, originalPrice: 199, discount: 25, isBestseller: true, image: 'https://www.cartpk.com/media/catalog/product/cache/ccf016c098f64509830f131aff46d4ef/n/e/nestle-apple-big.jpg', description: 'Enjoy the crisp and refreshing taste of natural apples with Nestle Fruita Vitals. Rich in vitamins and natural goodness.', keyFeatures: ['Made from apple concentrate', 'Rich in Vitamin C', '1 Litre pack'] },
+                { id: 11, name: 'Rooh Afza (800ml)', category: 'beverages', price: 350, originalPrice: 420, discount: 17, image: 'https://www.buyfreshonline.co.uk/wp-content/uploads/2024/09/Rooh-Afza.webp', description: 'The classic summer drink of Pakistan. A refreshing blend of fruits, herbs, and vegetables. Perfect for beating the heat.', keyFeatures: ['Traditional herbal recipe', 'Can be mixed with water or milk', '800ml bottle'] },
+                { id: 12, name: 'Pakola Ice Cream Soda', category: 'beverages', price: 70, originalPrice: 85, discount: 18, image: 'https://m.media-amazon.com/images/I/71S5Ea0KsLL.jpg_BO30,255,255,255_UF900,850_SR1910,1000,0,C_QL100_.jpg', description: 'Pakistan\'s iconic green drink. A unique and refreshing ice cream soda flavor that is loved by all generations.', keyFeatures: ['Iconic green color', 'Unique ice cream soda flavor', '330ml can'] },
+                
+                // Dairy & Chilled (4)
+                { id: 13, name: 'Nestle Milkpak (1L)', category: 'dairy', price: 180, originalPrice: 210, discount: 14, isBestseller: true, image: 'https://psmuae.com/cdn/shop/files/Nestle_Milk_Pak_Full_Cream_Milk_1Ltr_Front.jpg?v=1754142628', description: 'Nestle Milkpak provides the goodness of pure, wholesome milk. It is ideal for drinking, making tea, coffee, or for use in desserts.', keyFeatures: ['UHT standardized milk', 'Rich in Calcium and Protein', '1 Litre tetra pak'] },
+                { id: 14, name: 'Olpers Milk (1L)', category: 'dairy', price: 185, originalPrice: 215, discount: 14, image: 'https://media.naheed.pk/catalog/product/cache/2f2d0cb0c5f92580479e8350be94f387/o/l/olper_1000ml.jpg', description: 'Olpers provides all the nourishment of milk with a fresh taste. Fortified with vitamins for a healthy lifestyle.', keyFeatures: ['UHT standardized milk', 'Fortified with Vitamin A & D', '1 Litre tetra pak'] },
+                { id: 15, name: 'Adam\'s Cheddar Cheese Slices', category: 'dairy', price: 450, originalPrice: 550, discount: 18, image: 'https://www.adamsestore.com/cdn/shop/products/Singles-1kg1406x1026.jpg?v=1633763172', description: 'Perfect for sandwiches and burgers, Adam\'s cheese slices offer a rich and creamy cheddar flavor.', keyFeatures: ['Individually wrapped slices', 'Made from real milk', '10 slices per pack'] },
+                { id: 16, name: 'Blue Band Margarine (200g)', category: 'dairy', price: 380, originalPrice: 450, discount: 16, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFria1kay6z0TXCThxQGnx_jefxiXjvZpMOw&s', description: 'A breakfast essential, Blue Band is enriched with essential vitamins for healthy growth. Perfect on toast or for baking.', keyFeatures: ['Good source of Vitamin A, D, B6, B12', 'Smooth and easy to spread', '200g tub'] },
+
+                // Personal Care (4)
+                { id: 17, name: 'Lifebuoy Soap (Pack of 3)', category: 'personal-care', price: 200, originalPrice: 250, discount: 20, isBestseller: true, image: 'https://pictures.grocerapps.com/original/grocerapp-lifebuoy-total-10-pack-of-5e6c4123d58e5.png', description: 'Lifebuoy Total 10 soap gives you 100% stronger protection from infection-causing germs. The perfect soap for the whole family.', keyFeatures: ['Germ protection formula', 'Trusted by millions', 'Pack of 3 bars'] },
+                { id: 18, name: 'Sunsilk Shampoo', category: 'personal-care', price: 450, originalPrice: 550, discount: 18, image: 'https://finalchoice.com.pk/cdn/shop/files/Websiteupload_e9b6c5e9-6aaf-4f05-83fc-2ede8746091d.jpg?v=1742664380', description: 'Co-created with hair experts, Sunsilk shampoo gives you vibrant, luscious hair. Choose the variant that is right for you.', keyFeatures: ['Multiple variants for different hair types', 'Nourishing formula', '340ml bottle'] },
+                { id: 19, name: 'Colgate Toothpaste', category: 'personal-care', price: 180, originalPrice: 220, discount: 18, image: 'https://www.metro-online.pk/_next/image?url=https%3A%2F%2Fmetro-b2c.s3.ap-southeast-1.amazonaws.com%2Fproducts_images_new%2F12620521-0-M.jpg&w=3840&q=75', description: 'Colgate Maximum Cavity Protection helps fight cavities and keeps your teeth strong and healthy. The #1 choice of dentists.', keyFeatures: ['Calcium and Fluoride formula', 'Strengthens teeth', '150g tube'] },
+                { id: 20, name: 'Dove Moisturizing Lotion', category: 'personal-care', price: 350, originalPrice: 430, discount: 19, image: 'https://ucaaz.com/wp-content/uploads/2023/01/Untitled-design-2023-01-31T205308.736.png', description: 'Dove Essential Nourishment Body Lotion provides deep care for long-lasting soft and smooth skin.', keyFeatures: ['DeepCare Complex', 'Dermatologically tested', '200ml bottle'] },
+                
+                // Household Supplies (4)
+                { id: 21, name: 'Surf Excel Detergent (1kg)', category: 'household', price: 550, originalPrice: 680, discount: 19, isBestseller: true, image: 'https://www.metro-online.pk/_next/image?url=https%3A%2F%2Fmetro-b2c.s3.ap-southeast-1.amazonaws.com%2FProducts%2F1695629105270.jpg&w=3840&q=75', description: 'Surf Excel is your go-to solution for tough stain removal. Its advanced formula works on a wide variety of stains.', keyFeatures: ['Tough stain removal', 'For machine or hand wash', '1kg pack'] },
+                { id: 22, name: 'Mortein Insect Killer Spray', category: 'household', price: 400, originalPrice: 490, discount: 18, image: 'https://springs.com.pk/cdn/shop/products/26226-Mort-CIK-375mL_3D-copy.png?v=1757317756', description: 'Protect your family from disease-carrying insects with Mortein. Its powerful formula kills mosquitoes and flies instantly.', keyFeatures: ['Kills insects instantly', 'Pleasant fragrance', '400ml spray can'] },
+                { id: 23, name: 'Harpic Bathroom Cleaner', category: 'household', price: 280, originalPrice: 340, discount: 18, image: 'https://ucaaz.com/wp-content/uploads/2023/01/Untitled-design-2023-02-07T033532.104.png', description: 'Harpic Power Plus is 10x more effective than ordinary cleaners. It removes tough stains and kills 99.9% of germs.', keyFeatures: ['Kills 99.9% of germs', 'Removes tough stains', '750ml bottle'] },
+                { id: 24, name: 'Vim Dishwash Liquid', category: 'household', price: 250, originalPrice: 300, discount: 17, image: 'https://pakistandeals.pk/wp-content/uploads/2022/11/Vim-gel-250ml.png', description: 'With the power of 100 lemons, Vim liquid easily removes the toughest grease, leaving your dishes sparkling clean.', keyFeatures: ['Power of 100 lemons', 'Tough on grease', '500ml bottle'] },
+                
+                // Baby Products (4)
+                { id: 25, name: 'Pampers Diapers (Size 3)', category: 'baby', price: 1800, originalPrice: 2200, discount: 18, isBestseller: true, image: 'https://m.media-amazon.com/images/I/719VHuz+LlL.jpg_BO30,255,255,255_UF900,850_SR1910,1000,0,C_QL100_.jpg', description: 'Pampers provides up to 12 hours of dryness, ensuring your baby stays comfortable. Its soft, stretchy sides adapt to your baby\'s movements.', keyFeatures: ['Up to 12 hours of dryness', 'Soft and breathable material', 'Value pack of 50 diapers'] },
+                { id: 26, name: 'Johnson\'s Baby Shampoo', category: 'baby', price: 400, originalPrice: 490, discount: 18, image: 'https://static.beautytocare.com/media/catalog/product/j/o/johnson-s-baby-shampoo-100ml.jpg', description: 'As gentle to the eyes as pure water, Johnson\'s No More Tears formula is perfect for cleaning your baby\'s delicate hair and scalp.', keyFeatures: ['No More Tears formula', 'Hypoallergenic & pH balanced', '200ml bottle'] },
+                { id: 27, name: 'Cerelac Wheat Cereal', category: 'baby', price: 500, originalPrice: 600, discount: 17, image: 'https://www.cerelac.co.uk/sites/default/files/2023-06/m-banner-prod-wheat_with_milk.jpg', description: 'Nestle Cerelac is a nutritious, easy-to-digest infant cereal. Rich in iron and essential nutrients to support your baby\'s growth.', keyFeatures: ['Rich in Iron', 'Easy to digest', 'For babies from 6 months'] },
+                { id: 28, name: 'Mother Care Shampoo', category: 'baby', price: 300, originalPrice: 350, discount: 14, image: 'https://nayabazar.pk/images/products/LbOIztsYnvYkqGf.jpeg', description: 'As gentle to the eyes as pure water, Mother\'s Care No More Tears formula is perfect for cleaning your baby\'s delicate hair and scalp.', keyFeatures: ['Safe for babies', 'No More Tears formula', 'Hypoallergenic & pH balanced'] },
+
+                // Pet Care (4)
+                { id: 29, name: 'Whiskas Dry Cat Food', category: 'pet', price: 1500, originalPrice: 1800, discount: 17, image: 'https://thepetcabin.store/7629-large_default/whiskas-1-cat-complete-dry-tuna-7kg.jpg', description: 'Whiskas cat food provides a 100% complete and balanced diet for your feline friend, packed with essential nutrients and a taste they love.', keyFeatures: ['Complete & balanced nutrition', 'For adult cats (1+ years)', '1.5kg bag'] },
+                { id: 30, name: 'Pedigree Dry Dog Food', category: 'pet', price: 2800, originalPrice: 3400, discount: 18, isBestseller: true, image: 'https://5.imimg.com/data5/RY/OC/QS/SELLER-45539871/pedigree-dry-dog-food-adult-roasted-lamb-rice-vegetable-flavor-500x500.png', description: 'Pedigree provides dogs with a complete and balanced meal to support their health and vitality. Developed with nutritionists and vets.', keyFeatures: ['Supports digestion and immunity', 'For adult dogs', '3kg bag'] },
+                { id: 31, name: 'Feline Fresh Cat Litter (5L)', category: 'pet', price: 1200, originalPrice: 1450, discount: 17, image: 'https://ph-test-11.slatic.net/shop/5363c1a4801def675a14ab811aee8383.png', description: 'Feline Fresh offers superior odor control with its clumping formula. It\'s highly absorbent and low on dust for a cleaner litter box experience.', keyFeatures: ['Superior odor control', 'Strong clumping action', '5 Litre pack'] },
+            ];
+            
+            let cart = [];
+
+            function createProductCard(product) {
+                const bestsellerBadge = product.isBestseller ? `<span class="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">BESTSELLER</span>` : '';
+                return `
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden group">
+                        <div class="relative product-card-link" data-target="product-detail" data-product='${JSON.stringify(product)}'>
+                            <img src="${product.image}" alt="${product.name}" class="w-full h-56 object-cover pointer-events-none" onerror="this.onerror=null;this.src='https://placehold.co/400x400/e2e8f0/334155?text=Image+Not+Found';">
+                            ${bestsellerBadge}
+                            <span class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">${product.discount}% OFF</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-lg text-gray-800 truncate product-card-link" data-target="product-detail" data-product='${JSON.stringify(product)}'>${product.name}</h3>
+                            <div class="flex items-baseline mt-2">
+                                <span class="text-xl font-bold text-emerald-600 mr-2">Rs. ${product.price}</span>
+                                <span class="text-gray-500 line-through">Rs. ${product.originalPrice}</span>
+                            </div>
+                            <button class="w-full mt-4 bg-emerald-600 text-white font-semibold py-2 rounded-lg hover:bg-emerald-700 transition duration-300 add-to-cart-from-grid" data-product='${JSON.stringify(product)}'>Add to Cart</button>
+                        </div>
+                    </div>
+                `;
             }
             
-            spawnProjectile(pos, dir) {
-                const geo = new THREE.SphereGeometry(0.1);
-                const mat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.copy(pos);
-                this.scene.add(mesh);
+             function updateProductDetailPage(product) {
+                const detailPage = document.getElementById('product-detail');
+                detailPage.dataset.currentProduct = JSON.stringify(product); // Store current product
+                detailPage.querySelector('#product-detail-name').textContent = product.name;
+                detailPage.querySelector('#product-detail-price').textContent = `Rs. ${product.price.toFixed(2)}`;
+                detailPage.querySelector('#product-detail-original-price').textContent = `Rs. ${product.originalPrice.toFixed(2)}`;
+                detailPage.querySelector('#product-detail-discount').textContent = `${product.discount}% OFF`;
+
+                const mainImage = detailPage.querySelector('#main-product-image');
+                mainImage.src = product.image;
+                mainImage.alt = product.name;
                 
-                // Velocity
-                const vel = dir.clone().normalize().multiplyScalar(0.5); // speed
-                this.projectiles.push({ mesh, vel, life: 100 });
-            }
+                document.getElementById('product-quantity-input').value = 1; // Reset quantity
 
-            updateProjectiles() {
-                for(let i=this.projectiles.length-1; i>=0; i--) {
-                    const p = this.projectiles[i];
-                    p.mesh.position.add(p.vel);
-                    p.life--;
-                    if(p.life <= 0) {
-                        this.scene.remove(p.mesh);
-                        this.projectiles.splice(i, 1);
-                    }
-                }
-            }
-
-            resize() {
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.composer.setSize(window.innerWidth, window.innerHeight);
-            }
-
-            render() {
-                this.composer.render();
-            }
-        }
-
-        // ============================================================================
-        // 7. HAND TRACKING & LOGIC
-        // ============================================================================
-
-        class HandController {
-            constructor(videoEl, onData, onStatus) {
-                this.videoEl = videoEl;
-                this.onData = onData;
-                this.onStatus = onStatus || (() => {});
-                
-                // Important: Use pinned versions in locateFile to match script tags
-                this.hands = new Hands({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
-                });
-                
-                this.hands.setOptions({
-                    maxNumHands: 1,
-                    modelComplexity: 1,
-                    minDetectionConfidence: 0.6,
-                    minTrackingConfidence: 0.6
-                });
-
-                this.hands.onResults(this.process.bind(this));
-                
-                this.lastPos = new THREE.Vector3();
-                this.velocity = new THREE.Vector3();
-                this.lastTime = 0;
-            }
-
-            async start() {
-                // 1. Request Camera
-                this.onStatus("Requesting Camera Access...");
-                let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-                    this.videoEl.srcObject = stream;
-                    this.onStatus("Camera Access Granted. Initializing Video...");
-                    await this.videoEl.play();
-                } catch (err) {
-                    throw new Error("Camera Access Denied: " + err.message);
-                }
-
-                // 2. Start MediaPipe
-                this.onStatus("Downloading AI Models...");
-                
-                // Using Camera Util with explicit error handling wrapper
-                return new Promise((resolve, reject) => {
-                    const cam = new Camera(this.videoEl, {
-                        onFrame: async () => {
-                            try {
-                                await this.hands.send({image: this.videoEl});
-                            } catch(e) {
-                                console.error("MediaPipe Error:", e);
-                            }
-                        },
-                        width: 640, height: 480
-                    });
-
-                    cam.start()
-                        .then(() => {
-                            this.onStatus("System Ready.");
-                            resolve();
-                        })
-                        .catch(err => reject(err));
-                        
-                    // Timeout safety
-                    setTimeout(() => {
-                        // Sometimes start() promise doesn't resolve if stream is active but model hangs
-                        // We resolve anyway if stream is active so app doesn't freeze
-                        if (this.videoEl.readyState >= 2) resolve(); 
-                    }, 5000);
+                detailPage.querySelector('#product-detail-description').textContent = product.description;
+                const featuresList = detailPage.querySelector('#product-detail-features');
+                featuresList.innerHTML = '';
+                product.keyFeatures.forEach(feature => {
+                    const li = document.createElement('li');
+                    li.textContent = feature;
+                    featuresList.appendChild(li);
                 });
             }
 
-            process(results) {
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    const lm = results.multiHandLandmarks[0];
-                    const handedness = results.multiHandedness[0].label;
-                    
-                    const x = (0.5 - lm[9].x) * 18; 
-                    const y = (1.0 - lm[9].y) * 12;
-                    const palmSize = Math.abs(lm[0].y - lm[9].y); 
-                    const z = (palmSize - 0.2) * 20;
-
-                    const pos = new THREE.Vector3(x, y, z);
-                    
-                    const now = performance.now();
-                    const dt = (now - this.lastTime) / 1000;
-                    if(dt > 0) {
-                        const delta = pos.clone().sub(this.lastPos);
-                        this.velocity.lerp(delta.divideScalar(dt), 0.3); 
-                    }
-                    this.lastPos.copy(pos);
-                    this.lastTime = now;
-
-                    const gesture = this.recognizeGesture(lm);
-                    
-                    this.onData({
-                        found: true,
-                        pos: pos,
-                        vel: this.velocity,
-                        gesture: gesture,
-                        raw: lm,
-                        confidence: results.multiHandedness[0].score
-                    });
-
-                } else {
-                    this.onData({ found: false });
-                }
-            }
-
-            recognizeGesture(lm) {
-                const isIndexOpen = lm[8].y < lm[6].y;
-                const isMiddleOpen = lm[12].y < lm[10].y;
-                const isRingOpen = lm[16].y < lm[14].y;
-                const isPinkyOpen = lm[20].y < lm[18].y;
-
-                const pinchDist = this.dist(lm[4], lm[8]);
-                if (pinchDist < 0.05) return 'PINCH';
-
-                if (!isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen) return 'FIST';
-                if (isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen) return 'POINT';
-                if (isIndexOpen && isMiddleOpen && isRingOpen) return 'OPEN';
-
-                return 'UNKNOWN';
-            }
-
-            dist(p1, p2) {
-                return Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
-            }
-        }
-
-        // ============================================================================
-        // 8. MOUSE FALLBACK CONTROLLER
-        // ============================================================================
-        class MouseController {
-            constructor(onData) {
-                this.onData = onData;
-                this.active = false;
-                this.pos = new THREE.Vector3(0,0,0);
-                this.gesture = 'OPEN';
-                
-                window.addEventListener('mousemove', (e) => {
-                    if(!this.active) return;
-                    // Map screen to 3D world approx
-                    this.pos.x = (e.clientX / window.innerWidth) * 20 - 10;
-                    this.pos.y = -(e.clientY / window.innerHeight) * 14 + 7;
-                    this.pos.z = 0;
-                    
-                    this.emit();
-                });
-
-                window.addEventListener('mousedown', (e) => {
-                    this.gesture = 'FIST';
-                    this.emit();
-                });
-
-                window.addEventListener('mouseup', (e) => {
-                    this.gesture = 'OPEN';
-                    this.emit();
-                });
-                
-                window.addEventListener('keydown', (e) => {
-                    if(e.key === ' ') this.gesture = 'POINT';
-                    this.emit();
-                });
-                 window.addEventListener('keyup', (e) => {
-                    if(e.key === ' ') this.gesture = 'OPEN';
-                    this.emit();
-                });
-            }
-
-            start() {
-                this.active = true;
-                this.emit();
-            }
-
-            emit() {
-                if(!this.active) return;
-                this.onData({
-                    found: true,
-                    pos: this.pos,
-                    vel: new THREE.Vector3(0,0,0),
-                    gesture: this.gesture,
-                    confidence: 1.0
-                });
-            }
-        }
-
-        // ============================================================================
-        // 9. MAIN APPLICATION
-        // ============================================================================
-
-        class App {
-            constructor() {
-                this.mode = 'sandbox'; // sandbox, hologram, particles
-                this.isRunning = false;
-                
-                // UI Refs
-                this.ui = {
-                    fps: document.getElementById('fps-val'),
-                    hand: document.getElementById('hand-status'),
-                    gesture: document.getElementById('gesture-val'),
-                    conf: document.getElementById('confidence-val'),
-                    vel: document.getElementById('velocity-val'),
-                    mode: document.getElementById('mode-display'),
-                    phys: document.getElementById('physics-count'),
-                    part: document.getElementById('particle-count'),
-                    error: document.getElementById('error-msg'),
-                    spinner: document.getElementById('loading-spinner'),
-                    loadText: document.getElementById('loading-text'),
-                    mouseBtn: document.getElementById('mouse-mode-btn')
+            function populateGrids() {
+                const grids = {
+                    'home-deals': document.getElementById('home-deals-grid'),
+                    'shop': document.getElementById('shop-product-grid'),
+                    'bestsellers': document.getElementById('bestsellers-product-grid'),
+                    'pantry-staples': document.getElementById('pantry-staples-product-grid'),
+                    'snacks': document.getElementById('snacks-product-grid'),
+                    'beverages': document.getElementById('beverages-product-grid'),
+                    'dairy': document.getElementById('dairy-product-grid'),
+                    'personal-care': document.getElementById('personal-care-product-grid'),
+                    'household': document.getElementById('household-product-grid'),
+                    'baby': document.getElementById('baby-product-grid'),
+                    'pet': document.getElementById('pet-product-grid'),
                 };
 
-                // Systems
-                this.audio = new AudioEngine();
-                this.physics = new PhysicsEngine();
-                this.visuals = new VisualEngine();
-                this.particles = new ParticleSystem(this.visuals.scene);
+                Object.values(grids).forEach(grid => { if(grid) grid.innerHTML = '' });
+
+                const homeBestsellers = products.filter(p => p.isBestseller).slice(0, 2);
+                const homeTopDiscounts = [...products].sort((a, b) => b.discount - a.discount)
+                                                     .filter(p => !homeBestsellers.find(bs => bs.id === p.id))
+                                                     .slice(0, 2);
                 
-                this.handCtrl = new HandController(
-                    document.getElementById('input-video'), 
-                    this.handleInput.bind(this),
-                    (status) => this.ui.loadText.innerText = status
-                );
-                
-                this.mouseCtrl = new MouseController(this.handleInput.bind(this));
+                const homeProducts = [...homeBestsellers, ...homeTopDiscounts].sort(() => 0.5 - Math.random());
+                homeProducts.forEach(p => grids['home-deals'].innerHTML += createProductCard(p));
 
-                // State
-                this.heldObject = null;
-                this.shootCooldown = 0;
-
-                // Resize handler
-                window.addEventListener('resize', () => this.visuals.resize());
-
-                // Protocol Check
-                if(location.protocol === 'file:') {
-                    this.showError("SECURITY BLOCK: Browser blocks camera on file:// protocol.\nPlease use a local server (e.g., Live Server extension).");
-                }
-            }
-
-            async start() {
-                document.getElementById('start-btn').style.display = 'none';
-                this.ui.mouseBtn.style.display = 'none';
-                this.ui.spinner.style.display = 'block';
-                
-                await this.audio.init();
-
-                // Race Condition: If camera takes too long, show mouse button
-                const timeout = setTimeout(() => {
-                    if(!this.isRunning) {
-                        this.ui.loadText.innerText = "Taking a long time... Check Camera Permissions.";
-                        this.ui.mouseBtn.style.display = 'block';
-                    }
-                }, 8000);
-
-                try {
-                    await this.handCtrl.start();
-                    clearTimeout(timeout);
-                    this.launch();
-                } catch (e) {
-                    clearTimeout(timeout);
-                    this.showError("CAMERA ERROR: " + e.message);
-                    this.ui.spinner.style.display = 'none';
-                    this.ui.mouseBtn.style.display = 'block'; // Offer fallback
-                }
-            }
-
-            startMouseMode() {
-                document.getElementById('start-btn').style.display = 'none';
-                this.ui.mouseBtn.style.display = 'none';
-                this.ui.spinner.style.display = 'none';
-                this.ui.hand.innerText = "MOUSE MODE";
-                
-                this.mouseCtrl.start();
-                this.launch();
-            }
-
-            launch() {
-                document.getElementById('overlay-screen').style.display = 'none';
-                document.getElementById('ui-layer').style.display = 'block';
-                this.isRunning = true;
-                this.setMode('sandbox');
-                this.loop();
-            }
-
-            showError(msg) {
-                this.ui.error.style.display = 'block';
-                this.ui.error.innerText = msg;
-            }
-
-            setMode(mode) {
-                this.mode = mode;
-                this.ui.mode.innerText = mode.toUpperCase();
-                
-                // Update Buttons
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                const idx = mode === 'sandbox' ? 0 : mode === 'hologram' ? 1 : 2;
-                document.querySelectorAll('.mode-btn')[idx].classList.add('active');
-
-                // Cleanup
-                this.physics.clear();
-                this.particles.mesh.visible = false;
-                if(this.hologram) {
-                    this.visuals.scene.remove(this.hologram);
-                    this.hologram = null;
-                }
-
-                // Setup New Mode
-                if (mode === 'sandbox') {
-                    this.spawnCity();
-                } else if (mode === 'particles') {
-                    this.particles.mesh.visible = true;
-                } else if (mode === 'hologram') {
-                    this.spawnHologram();
-                }
-            }
-
-            spawnCity() {
-                // Procedurally generate physics boxes
-                const texture = Utils.createGridTexture();
-                const mat = new THREE.MeshStandardMaterial({ 
-                    map: texture, 
-                    color: 0x00f3ff,
-                    roughness: 0.2,
-                    metalness: 0.8,
-                    emissive: 0x000022
+                products.forEach(p => {
+                    if (grids.shop) grids.shop.innerHTML += createProductCard(p);
+                    if (p.isBestseller && grids.bestsellers) grids.bestsellers.innerHTML += createProductCard(p);
+                    if (grids[p.category]) grids[p.category].innerHTML += createProductCard(p);
                 });
+            }
 
-                for(let i=0; i<5; i++) {
-                    for(let j=0; j<3; j++) {
-                        const height = Utils.randomRange(1, 4);
-                        const box = new THREE.Mesh(new THREE.BoxGeometry(1, height, 1), mat.clone());
-                        box.position.set((i-2)*2, height/2 + 2, (j-1)*2);
-                        this.visuals.scene.add(box);
-                        this.physics.addBody(box, 'box', 1, 1); // approximate
+            const pageSections = document.querySelectorAll('.page-section');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+
+            function showPage(pageId) {
+                pageSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                const newPage = document.getElementById(pageId);
+                if(newPage) {
+                    newPage.classList.add('active');
+                }
+                if (pageId === 'cart') {
+                    renderCart();
+                }
+                 if (pageId === 'checkout') {
+                    renderCheckoutSummary();
+                }
+                if (pageId === 'our-story') {
+                    lucide.createIcons(); // Re-render icons on this page
+                }
+                window.scrollTo(0, 0);
+            }
+
+            // Cart Functions
+            function addToCart(product, quantity = 1) {
+                const existingItem = cart.find(item => item.id === product.id);
+                if (existingItem) {
+                    existingItem.quantity += quantity;
+                } else {
+                    cart.push({ ...product, quantity: quantity });
+                }
+                updateCartUI();
+                showToast(`${quantity} x ${product.name} added to cart!`);
+            }
+
+            function updateCartQuantity(productId, newQuantity) {
+                const item = cart.find(item => item.id === productId);
+                if (item) {
+                    if (newQuantity > 0) {
+                        item.quantity = newQuantity;
+                    } else {
+                        // Remove item if quantity is 0 or less
+                        cart = cart.filter(cartItem => cartItem.id !== productId);
                     }
                 }
+                updateCartUI();
+                renderCart();
             }
-
-            spawnHologram() {
-                const geo = new THREE.TorusKnotGeometry(1.5, 0.4, 100, 16);
-                const mat = new THREE.ShaderMaterial({
-                    uniforms: {
-                        time: { value: 0 },
-                        color: { value: new THREE.Color(0xff0055) }
-                    },
-                    vertexShader: SHADERS.holoVertex,
-                    fragmentShader: SHADERS.holoFragment,
-                    transparent: true,
-                    side: THREE.DoubleSide
-                });
-                this.hologram = new THREE.Mesh(geo, mat);
-                this.hologram.position.set(0, 5, 0);
-                this.visuals.scene.add(this.hologram);
-            }
-
-            handleInput(data) {
-                if(!data.found) {
-                    if(this.ui.hand.innerText !== "MOUSE MODE") {
-                        this.ui.hand.innerText = "SEARCHING";
-                        this.ui.hand.className = "data-val status-warn";
-                    }
-                    this.visuals.laserLine.material.opacity = 0;
+            
+            function renderCart() {
+                const cartContent = document.getElementById('cart-content');
+                if (cart.length === 0) {
+                    cartContent.innerHTML = `
+                        <div class="lg:col-span-3 text-center py-16">
+                            <i data-lucide="shopping-cart" class="h-24 w-24 mx-auto text-gray-300"></i>
+                            <h3 class="text-2xl font-semibold mt-4">Your cart is empty</h3>
+                            <p class="text-gray-500 mt-2">Looks like you haven't added anything to your cart yet.</p>
+                            <a href="#" data-target="shop" class="nav-link mt-6 inline-block bg-emerald-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-emerald-700 transition duration-300">Start Shopping</a>
+                        </div>`;
+                     lucide.createIcons();
                     return;
                 }
 
-                // Update UI
-                if(this.ui.hand.innerText !== "MOUSE MODE") {
-                    this.ui.hand.innerText = "TRACKING";
-                    this.ui.hand.className = "data-val status-ok";
-                }
-                this.ui.gesture.innerText = data.gesture;
-                this.ui.conf.innerText = Math.round(data.confidence * 100) + "%";
-                this.ui.vel.innerText = data.vel.length().toFixed(1) + " m/s";
+                const { subtotal, total, shipping } = calculateTotals();
+                const cartItemsHTML = cart.map(item => {
+                    const itemTotal = item.price * item.quantity;
+                    return `
+                        <div class="flex items-center bg-white p-4 rounded-lg shadow-sm">
+                            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md mr-4">
+                            <div class="flex-grow">
+                                <h4 class="font-semibold">${item.name}</h4>
+                                <p class="text-sm text-gray-500">Price: Rs. ${item.price.toFixed(2)}</p>
+                                <div class="flex items-center mt-2">
+                                    <button class="cart-quantity-change px-2 py-1 border rounded-l-md" data-product-id="${item.id}" data-change="-1">-</button>
+                                    <input type="text" value="${item.quantity}" class="w-12 text-center border-t border-b" readonly>
+                                    <button class="cart-quantity-change px-2 py-1 border rounded-r-md" data-product-id="${item.id}" data-change="1">+</button>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg">Rs. ${itemTotal.toFixed(2)}</p>
+                                <button class="cart-remove-item text-red-500 hover:text-red-700 text-sm mt-2" data-product-id="${item.id}">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
 
-                // Visual Feedback
-                this.visuals.updateHandVisuals(data.pos, data.gesture);
 
-                // --- MODE LOGIC ---
-                if (this.mode === 'sandbox') {
-                    this.logicSandbox(data);
-                } else if (this.mode === 'particles') {
-                    this.logicParticles(data);
-                } else if (this.mode === 'hologram') {
-                    this.logicHologram(data);
-                }
+                const summaryHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-bold border-b pb-4 mb-4">Order Summary</h3>
+                        <div class="space-y-3 text-gray-600">
+                            <div class="flex justify-between"><span>Subtotal</span><span class="font-medium text-gray-800">Rs. ${subtotal.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Shipping</span><span class="font-medium text-gray-800">Rs. ${shipping.toFixed(2)}</span></div>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl mt-4 pt-4 border-t">
+                            <span>Total</span>
+                            <span>Rs. ${total.toFixed(2)}</span>
+                        </div>
+                        <a href="#" data-target="checkout" class="nav-link text-center w-full mt-6 bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300 block">Proceed to Checkout</a>
+                    </div>`;
 
-                // Global Interactions (Shooting)
-                if (data.gesture === 'POINT') {
-                    this.visuals.laserLine.material.opacity = 0.8;
-                    const tip = data.pos.clone();
-                    const end = tip.clone().add(new THREE.Vector3(0,0,-10));
-                    this.visuals.laserLine.geometry.setFromPoints([tip, end]);
-                    this.visuals.laserLine.geometry.attributes.position.needsUpdate = true;
-                    
-                    if(this.shootCooldown <= 0) {
-                        this.visuals.spawnProjectile(tip, new THREE.Vector3(0, 0, -1));
-                        this.audio.playSFX('shoot');
-                        this.shootCooldown = 20; // frames
-                    }
-                } else {
-                    this.visuals.laserLine.material.opacity = 0;
-                }
-                this.shootCooldown--;
+                cartContent.innerHTML = `
+                    <div class="lg:col-span-2 space-y-4">${cartItemsHTML}</div>
+                    <div>${summaryHTML}</div>
+                `;
             }
 
-            logicSandbox(data) {
-                // Force Push (Open Hand)
-                if (data.gesture === 'OPEN') {
-                    for(let obj of this.physics.bodies) {
-                        const dist = obj.mesh.position.distanceTo(data.pos);
-                        if(dist < 5) {
-                            const dir = obj.mesh.position.clone().sub(data.pos).normalize();
-                            const force = 15 / (dist + 0.1);
-                            obj.body.velocity.x += dir.x * force * 0.5;
-                            obj.body.velocity.y += dir.y * force * 0.5;
-                            obj.body.velocity.z += dir.z * force * 0.5;
-                            obj.mesh.material.emissive.setHex(0x00f3ff);
-                        } else {
-                            obj.mesh.material.emissive.setHex(0x000022);
+             function renderCheckoutSummary() {
+                const container = document.getElementById('checkout-summary-container');
+                if (cart.length === 0) {
+                     container.innerHTML = '<p>Your cart is empty. Cannot proceed to checkout.</p>';
+                     return;
+                }
+                
+                const { subtotal, total, shipping } = calculateTotals();
+                
+                container.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-6">Your Order</h3>
+                        <div class="space-y-4">
+                            ${cart.map(item => `
+                                <div class="flex justify-between items-center text-sm">
+                                    <div class="flex items-center">
+                                        <img src="${item.image}" class="w-12 h-12 rounded-md mr-3">
+                                        <div>
+                                            <p class="font-medium">${item.name}</p>
+                                            <p class="text-gray-500">Qty: ${item.quantity}</p>
+                                        </div>
+                                    </div>
+                                    <p class="font-medium">Rs. ${(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-3 text-gray-600 mt-6 border-t pt-4">
+                            <div class="flex justify-between"><span>Subtotal</span><span class="font-medium text-gray-800">Rs. ${subtotal.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Shipping</span><span class="font-medium text-gray-800">Rs. ${shipping.toFixed(2)}</span></div>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl mt-4 pt-4 border-t">
+                            <span>Total</span>
+                            <span>Rs. ${total.toFixed(2)}</span>
+                        </div>
+                        <button id="place-order-button" class="w-full mt-6 bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition duration-300">Place Order</button>
+                    </div>
+                `;
+            }
+
+            function calculateTotals() {
+                const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const shipping = subtotal > 0 ? 50.00 : 0; // Example fixed shipping if cart not empty
+                const total = subtotal + shipping;
+                return { subtotal, total, shipping };
+            }
+
+
+            function updateCartUI() {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                document.getElementById('cart-item-count').textContent = totalItems;
+                document.getElementById('mobile-cart-item-count').textContent = totalItems;
+            }
+            
+            function showToast(message) {
+                const toast = document.getElementById('toast-notification');
+                const toastMessage = document.getElementById('toast-message');
+                toastMessage.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            // --- Consolidated Event Listener ---
+            document.addEventListener('click', function(event) {
+                const target = event.target;
+                
+                // Navigation, Collection, Product Card Links
+                const link = target.closest('.nav-link, .collection-card-link, .product-card-link');
+                if (link) {
+                    event.preventDefault();
+                    const targetPage = link.getAttribute('data-target');
+                    if (link.classList.contains('product-card-link')) {
+                        const productData = JSON.parse(link.getAttribute('data-product'));
+                        updateProductDetailPage(productData);
+                    }
+                    if (targetPage) {
+                        showPage(targetPage);
+                        mobileMenu.classList.add('hidden');
+                    }
+                    return;
+                }
+
+                // Add to Cart from Grid
+                if (target.matches('.add-to-cart-from-grid')) {
+                    const productData = JSON.parse(target.dataset.product);
+                    addToCart(productData, 1);
+                    return;
+                }
+
+                // Product Detail Page - Add to Cart
+                if (target.closest('#add-to-cart-button')) {
+                    const detailPage = document.getElementById('product-detail');
+                    const productData = JSON.parse(detailPage.dataset.currentProduct);
+                    const quantity = parseInt(document.getElementById('product-quantity-input').value, 10);
+                    if (productData && quantity > 0) {
+                        addToCart(productData, quantity);
+                    }
+                    return;
+                }
+
+                 // Place Order Button
+                if (target.closest('#place-order-button')) {
+                    const form = document.getElementById('checkout-form');
+                    if (form.checkValidity()) {
+                        event.preventDefault();
+                        // Here you would typically send data to a server
+                        cart = []; // Empty the cart
+                        updateCartUI();
+                        showPage('home');
+                        showToast('Thank you! Your order has been placed.');
+                        form.reset();
+                    } else {
+                        form.reportValidity(); // Show validation messages
+                    }
+                    return;
+                }
+                
+                // Product Detail Page - Quantity Controls
+                if (target.closest('#quantity-decrease') || target.closest('#quantity-increase')) {
+                    const input = document.getElementById('product-quantity-input');
+                    let value = parseInt(input.value, 10);
+                    value += target.closest('#quantity-increase') ? 1 : -1;
+                    if (value < 1) value = 1;
+                    input.value = value;
+                    return;
+                }
+                
+                // Cart Page - Quantity Controls
+                if (target.matches('.cart-quantity-change')) {
+                    const productId = parseInt(target.dataset.productId, 10);
+                    const change = parseInt(target.dataset.change, 10);
+                    const item = cart.find(i => i.id === productId);
+                    if (item) {
+                        updateCartQuantity(productId, item.quantity + change);
+                    }
+                    return;
+                }
+                
+                // Cart Page - Remove Item
+                if (target.matches('.cart-remove-item')) {
+                    const productId = parseInt(target.dataset.productId, 10);
+                    cart = cart.filter(item => item.id !== productId);
+                    updateCartUI();
+                    renderCart();
+                    return;
+                }
+
+                // City Selector
+                const citySelectorButton = target.closest('#city-selector-button');
+                const cityDropdown = document.getElementById('city-dropdown');
+                if (citySelectorButton) {
+                    cityDropdown.classList.toggle('hidden');
+                } else if (!target.closest('#city-dropdown')) {
+                    cityDropdown.classList.add('hidden');
+                }
+                
+                if (target.matches('.city-option')) {
+                    event.preventDefault();
+                    document.getElementById('current-city').textContent = target.textContent;
+                    cityDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Bulk Order Form
+            const bulkOrderForm = document.getElementById('bulk-order-form');
+            if(bulkOrderForm) {
+                bulkOrderForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    showToast('Thank you! Your bulk order request has been submitted.');
+                    bulkOrderForm.reset();
+                    showPage('home');
+                });
+            }
+
+
+            // Initial setup calls
+            populateGrids();
+            showPage('home');
+        
+            document.getElementById('mobile-menu-button').addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            
+            window.addEventListener('scroll', () => {
+                document.getElementById('header').classList.toggle('shadow-xl', window.scrollY > 10);
+            });
+            
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const icon = button.querySelector('i');
+                    const isActive = button.classList.toggle('active');
+                    icon.style.transform = isActive ? 'rotate(180deg)' : 'rotate(0deg)';
+                    accordionButtons.forEach(otherButton => {
+                        if (otherButton !== button) {
+                            otherButton.classList.remove('active');
+                            otherButton.querySelector('i').style.transform = 'rotate(0deg)';
                         }
-                    }
-                }
-
-                // Grab (Fist)
-                if (data.gesture === 'FIST') {
-                    if(!this.heldObject) {
-                        // Find closest
-                        let closest = null;
-                        let minD = 3;
-                        for(let obj of this.physics.bodies) {
-                            const d = obj.mesh.position.distanceTo(data.pos);
-                            if(d < minD) { minD = d; closest = obj; }
-                        }
-                        if(closest) {
-                            this.heldObject = closest;
-                            this.audio.playSFX('grab');
-                        }
-                    }
-                    
-                    if(this.heldObject) {
-                        // Move body to hand
-                        this.heldObject.body.position.copy(data.pos);
-                        this.heldObject.body.velocity.set(0,0,0);
-                        this.heldObject.mesh.material.emissive.setHex(0xff0055);
-                    }
-                } else {
-                    if(this.heldObject) {
-                        // Throw
-                        this.heldObject.body.velocity.copy(data.vel).multiplyScalar(2.0); // Multiply throw force
-                        this.heldObject.mesh.material.emissive.setHex(0x000022);
-                        this.heldObject = null;
-                    }
-                }
-            }
-
-            logicParticles(data) {
-                const isAttract = data.gesture === 'FIST';
-                const isRepel = data.gesture === 'OPEN';
-                this.particles.update(data.pos, isAttract, isRepel, 0.016);
-                
-                // Audio feedback
-                if(isAttract) this.audio.playSFX('hover');
-            }
-
-            logicHologram(data) {
-                if(!this.hologram) return;
-                
-                // Rotation
-                this.hologram.rotation.y += data.vel.x * 0.1;
-                this.hologram.rotation.x += data.vel.y * 0.1;
-                
-                // Shader update
-                this.hologram.material.uniforms.time.value = performance.now() / 1000;
-                
-                if(data.gesture === 'FIST') {
-                    this.hologram.material.uniforms.color.value.setHex(0xff0055); // Red alert
-                } else {
-                    this.hologram.material.uniforms.color.value.setHex(0x00f3ff); // Normal
-                }
-            }
-
-            loop() {
-                if(!this.isRunning) return;
-                requestAnimationFrame(this.loop.bind(this));
-
-                const dt = 1/60;
-
-                // Updates
-                this.physics.update(dt);
-                this.visuals.updateProjectiles();
-                
-                // UI Stats
-                this.ui.fps.innerText = Math.round(1000 / (performance.now() - this.lastTime || 16));
-                this.lastTime = performance.now();
-                this.ui.phys.innerText = this.physics.bodies.length;
-                this.ui.part.innerText = this.mode === 'particles' ? this.particles.count : 0;
-
-                // Render
-                this.visuals.render();
-            }
-        }
-
-        // Initialize Global App
-        window.app = new App();
-
+                    });
+                });
+            });
+        });
     </script>
+
 </body>
 </html>
+
+
